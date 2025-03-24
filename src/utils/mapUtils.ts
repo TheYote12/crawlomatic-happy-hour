@@ -1,5 +1,9 @@
+
 import { Coordinates } from "./locationUtils";
 import mapboxgl from 'mapbox-gl';
+
+// Set the Mapbox access token
+mapboxgl.accessToken = 'pk.eyJ1IjoiY2FybG9iZXJyeSIsImEiOiJjbThuY2djbXkxMTJoMm1xMDh2Nmc5NnY1In0.wreOu8QmXIRVUOTLgAZe4A';
 
 // Define interfaces
 export interface Place {
@@ -22,7 +26,7 @@ export interface Place {
 
 export interface PubCrawl {
   places: Place[];
-  route: google.maps.DirectionsResult | null;
+  route: mapboxgl.Map | null;
   totalDistance: number;
   totalDuration: number;
 }
@@ -36,36 +40,95 @@ export const searchNearbyPubs = async (
   map: mapboxgl.Map,
   maxResults = 10
 ): Promise<Place[]> => {
-  // For demo purposes, returning mock data
-  // In a real app, you would use Mapbox's geocoding API to search for pubs
-  const mockPubs: Place[] = [
-    {
-      id: '1',
-      name: 'The Red Lion',
-      vicinity: '123 Main St',
-      rating: 4.5,
-      geometry: {
-        location: {
-          lat: location.latitude + 0.001,
-          lng: location.longitude + 0.001
-        }
+  try {
+    // For demo purposes, we'll use a more realistic set of mock pubs
+    // In a real app, you would use Mapbox's geocoding API to search for pubs
+    const mockPubs: Place[] = [
+      {
+        id: '1',
+        name: 'The Red Lion',
+        vicinity: '123 Main St',
+        rating: 4.5,
+        geometry: {
+          location: {
+            lat: location.latitude + 0.002,
+            lng: location.longitude + 0.002
+          }
+        },
+        opening_hours: {
+          open_now: true
+        },
+        price_level: 2
+      },
+      {
+        id: '2',
+        name: 'The Crown',
+        vicinity: '456 High St',
+        rating: 4.2,
+        geometry: {
+          location: {
+            lat: location.latitude - 0.001,
+            lng: location.longitude - 0.001
+          }
+        },
+        opening_hours: {
+          open_now: true
+        },
+        price_level: 1
+      },
+      {
+        id: '3',
+        name: 'The Anchor',
+        vicinity: '789 River Rd',
+        rating: 4.7,
+        geometry: {
+          location: {
+            lat: location.latitude + 0.001,
+            lng: location.longitude - 0.002
+          }
+        },
+        price_level: 3
+      },
+      {
+        id: '4',
+        name: 'The Fox & Hound',
+        vicinity: '101 Forest Lane',
+        rating: 4.0,
+        geometry: {
+          location: {
+            lat: location.latitude - 0.002,
+            lng: location.longitude + 0.001
+          }
+        },
+        opening_hours: {
+          open_now: false
+        },
+        price_level: 2
+      },
+      {
+        id: '5',
+        name: 'The King\'s Arms',
+        vicinity: '202 Castle St',
+        rating: 4.3,
+        geometry: {
+          location: {
+            lat: location.latitude + 0.003,
+            lng: location.longitude - 0.001
+          }
+        },
+        opening_hours: {
+          open_now: true
+        },
+        price_level: 2
       }
-    },
-    {
-      id: '2',
-      name: 'The Crown',
-      vicinity: '456 High St',
-      rating: 4.2,
-      geometry: {
-        location: {
-          lat: location.latitude - 0.001,
-          lng: location.longitude - 0.001
-        }
-      }
-    }
-  ];
+    ];
 
-  return mockPubs;
+    // For realism, we'll slice according to maxResults
+    return mockPubs.slice(0, maxResults);
+  } catch (error) {
+    console.error('Error searching for pubs:', error);
+    throw new Error('Failed to search for pubs');
+  }
 };
 
 /**
@@ -79,13 +142,16 @@ export const createPubCrawlRoute = async (
   // Filter places to include only the requested number of stops
   const filteredPlaces = places.slice(0, maxStops);
   
-  // For demo purposes, returning mock data
+  // Calculate a rough distance and duration based on the number of pubs
   // In a real app, you would use Mapbox's directions API
+  const totalDistance = filteredPlaces.length * 0.5; // roughly 0.5km between pubs
+  const totalDuration = filteredPlaces.length * 10; // roughly 10 minutes between pubs
+  
   return {
     places: filteredPlaces,
     route: null,
-    totalDistance: 2.5,
-    totalDuration: 30
+    totalDistance,
+    totalDuration
   };
 };
 
@@ -93,9 +159,8 @@ export const createPubCrawlRoute = async (
  * Gets a photo URL for a place
  */
 export const getPlacePhotoUrl = (photoReference: string, maxWidth = 400): string => {
-  // For a real app, you'd use your API key and the Places API to get actual photos
-  // Since this is just a demo, we'll use a placeholder image
-  return `https://via.placeholder.com/${maxWidth}x${maxWidth}?text=Photo+Not+Available`;
+  // Using Unsplash for more realistic pub images
+  return `https://source.unsplash.com/random/400x200/?pub,bar&sig=${photoReference}`;
 };
 
 /**
