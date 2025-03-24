@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { toast } from "sonner";
 import Header from '@/components/Header';
@@ -8,10 +9,9 @@ import PubList from '@/components/PubList';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { getCurrentLocation, Coordinates } from '@/utils/locationUtils';
 import { Place, PubCrawl, searchNearbyPubs, createPubCrawlRoute } from '@/utils/mapUtils';
-import { ArrowDown, Loader2 } from 'lucide-react';
-import mapboxgl from 'mapbox-gl';
-import MapboxApiKeyInput from '@/components/MapboxApiKeyInput';
-import { MapboxApiKeyManager } from '@/utils/mapboxApiKeyManager';
+import { ArrowDown } from 'lucide-react';
+import GoogleMapsApiKeyInput from '@/components/GoogleMapsApiKeyInput';
+import { GoogleMapsApiKeyManager } from '@/utils/googleMapsApiKeyManager';
 
 const Index = () => {
   const [location, setLocation] = useState<Coordinates | null>(null);
@@ -21,15 +21,15 @@ const Index = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [pubCrawl, setPubCrawl] = useState<PubCrawl | null>(null);
   const [activePubIndex, setActivePubIndex] = useState(-1);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Check if Mapbox API key is available on component mount
+  // Check if Google Maps API key is available on component mount
   useEffect(() => {
-    const apiKey = MapboxApiKeyManager.getApiKey();
+    const apiKey = GoogleMapsApiKeyManager.getApiKey();
     if (!apiKey) {
-      toast.error('Mapbox API key is not set. Please set your API key to use the map.');
+      toast.error('Google Maps API key is not set. Please set your API key to use the map.');
     }
   }, []);
 
@@ -62,7 +62,7 @@ const Index = () => {
   }, []);
 
   // Handle map load
-  const handleMapLoad = useCallback((map: mapboxgl.Map) => {
+  const handleMapLoad = useCallback((map: google.maps.Map) => {
     console.log("Map loaded and ready");
     mapRef.current = map;
     setIsMapLoading(false);
@@ -79,9 +79,9 @@ const Index = () => {
       
       const radiusInMeters = options.distance * 1000;
       
-      // Check if Mapbox API key is available
-      if (!MapboxApiKeyManager.isKeyValid()) {
-        toast.error('Please set a valid Mapbox API key to search for pubs');
+      // Check if Google Maps API key is available
+      if (!GoogleMapsApiKeyManager.isKeyValid()) {
+        toast.error('Please set a valid Google Maps API key to search for pubs');
         setIsLoading(false);
         return;
       }
@@ -152,7 +152,7 @@ const Index = () => {
                   activePubIndex={activePubIndex}
                   onMapLoad={handleMapLoad}
                 />
-                <MapboxApiKeyInput />
+                <GoogleMapsApiKeyInput />
               </div>
               
               <div ref={optionsRef}>
