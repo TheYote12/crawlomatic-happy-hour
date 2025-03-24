@@ -1,9 +1,11 @@
+
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, DirectionsRenderer } from '@react-google-maps/api';
 import { Coordinates } from '../utils/locationUtils';
 import LoadingSpinner from './LoadingSpinner';
 import { toast } from "sonner";
 import { GoogleMapsApiKeyManager } from '../utils/googleMapsApiKeyManager';
+import { Button } from './ui/button';
 
 interface MapProps {
   location: Coordinates;
@@ -31,6 +33,7 @@ const Map: React.FC<MapProps> = ({
 }) => {
   const mapRef = useRef<google.maps.Map | null>(null);
   const [isMapError, setIsMapError] = useState(false);
+  const [isDirectionsError, setIsDirectionsError] = useState(false);
   const markersRef = useRef<google.maps.Marker[]>([]);
   
   // Load Google Maps API with your key
@@ -52,6 +55,16 @@ const Map: React.FC<MapProps> = ({
       }
     }
   }, [loadError]);
+
+  // Check for route errors
+  useEffect(() => {
+    if (pubCoordinates.length > 0 && !route && !isMapError) {
+      // Only show the error if we have pubs but no route
+      setIsDirectionsError(true);
+    } else {
+      setIsDirectionsError(false);
+    }
+  }, [route, pubCoordinates, isMapError]);
 
   // Handle map load
   const handleOnLoad = useCallback((map: google.maps.Map) => {
@@ -141,6 +154,11 @@ const Map: React.FC<MapProps> = ({
     mapRef.current = null;
   }, []);
 
+  // Function to open Google Cloud Console for enabling Directions API
+  const openDirectionsApiConsole = () => {
+    window.open('https://console.cloud.google.com/apis/library/directions-backend.googleapis.com', '_blank');
+  };
+
   // Display loading or error states
   if (loadError) {
     return (
@@ -215,6 +233,29 @@ const Map: React.FC<MapProps> = ({
           <p className="text-sm text-muted-foreground text-center mt-2">
             There was a problem loading the map. Please check your internet connection and Google Maps API key.
           </p>
+        </div>
+      )}
+
+      {isDirectionsError && !isMapError && pubCoordinates.length > 0 && (
+        <div className="absolute bottom-4 left-4 right-4 glass p-4 rounded-lg shadow-lg">
+          <h3 className="text-md font-semibold mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-amber-500">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            Directions API not enabled
+          </h3>
+          <p className="text-sm text-muted-foreground mb-3">
+            For route mapping to work, you need to enable the Directions API in your Google Cloud Console.
+          </p>
+          <Button 
+            variant="secondary" 
+            className="w-full" 
+            onClick={openDirectionsApiConsole}
+          >
+            Enable Directions API
+          </Button>
         </div>
       )}
     </div>

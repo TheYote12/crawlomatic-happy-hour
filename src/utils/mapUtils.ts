@@ -1,3 +1,4 @@
+
 import { Coordinates } from "./locationUtils";
 import { toast } from "sonner";
 import { GoogleMapsApiKeyManager } from './googleMapsApiKeyManager';
@@ -219,10 +220,20 @@ export const createPubCrawlRoute = async (
           console.error("Directions service failed:", status);
           
           if (status === google.maps.DirectionsStatus.REQUEST_DENIED) {
-            // Display toast warning about the Directions API
-            toast.warning("Directions API not enabled", {
-              description: "Route mapping requires the Directions API. Enable it in Google Cloud Console.",
-              duration: 8000,
+            // Show more detailed instructions for enabling the Directions API
+            toast.error("Directions API not enabled", {
+              description: "You need to enable the Directions API in your Google Cloud Console to use route mapping.",
+              duration: 10000,
+              action: {
+                label: "How to fix",
+                onClick: () => {
+                  window.open("https://console.cloud.google.com/apis/library/directions-backend.googleapis.com", "_blank");
+                }
+              }
+            });
+          } else if (status === "OVER_QUERY_LIMIT") {
+            toast.error("API limit exceeded", {
+              description: "You have exceeded your daily quota for the Directions API."
             });
           }
           
