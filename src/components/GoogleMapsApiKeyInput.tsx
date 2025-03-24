@@ -3,12 +3,14 @@ import React, { useState } from 'react';
 import { GoogleMapsApiKeyManager } from '../utils/googleMapsApiKeyManager';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Settings, Key, RotateCcw } from 'lucide-react';
+import { Settings, Key, RotateCcw, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const GoogleMapsApiKeyInput: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
 
   const handleSave = () => {
     setIsSaving(true);
@@ -25,6 +27,45 @@ const GoogleMapsApiKeyInput: React.FC = () => {
   const handleReset = () => {
     GoogleMapsApiKeyManager.resetToDefault();
     setIsOpen(false);
+  };
+
+  const checkPlacesAPI = () => {
+    setIsChecking(true);
+    
+    // Create a script element to load the Places API and check its status
+    const script = document.createElement('script');
+    const currentKey = apiKey || GoogleMapsApiKeyManager.getApiKey();
+    
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${currentKey}&libraries=places&callback=checkPlacesCallback`;
+    script.async = true;
+    
+    // Define the callback function
+    window.checkPlacesCallback = () => {
+      try {
+        if (window.google && window.google.maps && window.google.maps.places) {
+          toast.success('Places API is correctly configured!');
+        } else {
+          toast.error('Places API failed to load correctly');
+        }
+      } catch (error) {
+        toast.error('Error checking Places API: ' + (error instanceof Error ? error.message : String(error)));
+      } finally {
+        setIsChecking(false);
+        // Clean up
+        document.body.removeChild(script);
+        delete window.checkPlacesCallback;
+      }
+    };
+    
+    // Handle error
+    script.onerror = () => {
+      toast.error('Failed to load Places API. Make sure your API key is valid and has Places API enabled.');
+      setIsChecking(false);
+      document.body.removeChild(script);
+      delete window.checkPlacesCallback;
+    };
+    
+    document.body.appendChild(script);
   };
 
   // Don't render anything if a valid API key exists
@@ -86,13 +127,37 @@ const GoogleMapsApiKeyInput: React.FC = () => {
               {isSaving ? 'Saving...' : 'Save Key'}
             </Button>
           </div>
+          
+          <Button 
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={checkPlacesAPI}
+            disabled={isChecking}
+          >
+            <AlertCircle className="mr-2 h-3 w-3" />
+            {isChecking ? 'Checking...' : 'Check Places API'}
+          </Button>
+          
           <p className="text-xs text-muted-foreground mt-2">
             Your API key is stored locally and is never sent to our servers.
+          </p>
+          
+          <p className="text-xs text-muted-foreground">
+            <strong>Note:</strong> You must enable the Places API in your Google Cloud Console 
+            for this application to work correctly.
           </p>
         </div>
       )}
     </div>
   );
 };
+
+// Add the Places API callback type to the window object
+declare global {
+  interface Window {
+    checkPlacesCallback: () => void;
+  }
+}
 
 export default GoogleMapsApiKeyInput;

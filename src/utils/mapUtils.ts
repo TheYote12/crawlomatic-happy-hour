@@ -1,3 +1,4 @@
+
 import { Coordinates } from "./locationUtils";
 import { toast } from "sonner";
 import { GoogleMapsApiKeyManager } from './googleMapsApiKeyManager';
@@ -44,17 +45,24 @@ export const searchNearbyPubs = async (
     if (!apiKey) {
       throw new Error("Google Maps API key is not set");
     }
-    
-    // Skip direct fetch approach since it has CORS issues
-    // Go straight to using the client-side Google Maps Places library
+
+    // Check if Places API is accessible through the Google Maps JavaScript API
+    if (!window.google || !window.google.maps || !window.google.maps.places) {
+      console.error("Places API library is not loaded correctly");
+      throw new Error("Places API is not available. Make sure it's enabled in your Google Cloud Console.");
+    }
     
     return new Promise((resolve, reject) => {
-      if (!window.google || !window.google.maps || !window.google.maps.places) {
-        reject(new Error("Google Maps Places library not loaded"));
-        return;
-      }
-      
       const placesService = new google.maps.places.PlacesService(map);
+      
+      // Log the request details for debugging
+      console.log("Places API request:", {
+        location: new google.maps.LatLng(location.latitude, location.longitude),
+        radius,
+        type: 'bar',
+        keyword: 'pub'
+      });
+      
       const request = {
         location: new google.maps.LatLng(location.latitude, location.longitude),
         radius,
@@ -63,6 +71,8 @@ export const searchNearbyPubs = async (
       };
       
       placesService.nearbySearch(request, (results, status) => {
+        console.log("Places API response status:", status);
+        
         if (status === google.maps.places.PlacesServiceStatus.OK && results) {
           console.log("Places API results:", results);
           
@@ -88,19 +98,39 @@ export const searchNearbyPubs = async (
           
           resolve(places);
         } else {
-          // If API is not activated, provide a helpful error message
-          if (status === "REQUEST_DENIED" || status === "UNKNOWN_ERROR") {
-            console.error(`Google Places API error: ${status}`);
-            reject(new Error(`Places API error: ${status}. You need to enable the Places API in your Google Cloud Console.`));
-          } else {
-            reject(new Error(`Google Places API error: ${status}`));
+          console.error("Places API error:", status);
+          
+          // More detailed error information based on status
+          let errorMessage = `Places API error: ${status}.`;
+          
+          if (status === "REQUEST_DENIED" || status === google.maps.places.PlacesServiceStatus.REQUEST_DENIED) {
+            errorMessage += " Your API key may not have the Places API enabled.";
+          } else if (status === "UNKNOWN_ERROR" || status === google.maps.places.PlacesServiceStatus.UNKNOWN_ERROR) {
+            errorMessage += " This could be a temporary server error.";
+          } else if (status === "INVALID_REQUEST" || status === google.maps.places.PlacesServiceStatus.INVALID_REQUEST) {
+            errorMessage += " The request was invalid.";
+          } else if (status === "OVER_QUERY_LIMIT" || status === google.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT) {
+            errorMessage += " You have exceeded your daily request quota.";
+          } else if (status === "NOT_FOUND" || status === google.maps.places.PlacesServiceStatus.NOT_FOUND) {
+            errorMessage += " The place was not found.";
+          } else if (status === "ZERO_RESULTS" || status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+            errorMessage += " No pubs were found within the specified radius.";
           }
+          
+          // Add guidance for API activation
+          if (status === "REQUEST_DENIED" || status === "UNKNOWN_ERROR" || 
+              status === google.maps.places.PlacesServiceStatus.REQUEST_DENIED || 
+              status === google.maps.places.PlacesServiceStatus.UNKNOWN_ERROR) {
+            errorMessage += " You need to enable the Places API in your Google Cloud Console: https://console.cloud.google.com/apis/library/places-backend.googleapis.com";
+          }
+          
+          reject(new Error(errorMessage));
         }
       });
     });
   } catch (error) {
     console.error('Error searching for pubs:', error);
-    toast.error('Failed to search for pubs. Make sure the Places API is enabled in your Google Cloud Console.');
+    toast.error(error instanceof Error ? error.message : 'Failed to search for pubs');
     throw error;
   }
 };

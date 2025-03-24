@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { toast } from "sonner";
 import Header from '@/components/Header';
@@ -91,38 +92,55 @@ const Index = () => {
       }
       
       // Search for pubs near the user's location
-      const pubs = await searchNearbyPubs(location, radiusInMeters, mapRef.current, options.stops * 2);
-      
-      if (pubs.length === 0) {
-        toast.error('No pubs found nearby. Try increasing your search radius.');
-        setIsLoading(false);
-        return;
+      console.log("Attempting to search for pubs...");
+      try {
+        const pubs = await searchNearbyPubs(location, radiusInMeters, mapRef.current, options.stops * 2);
+        
+        if (pubs.length === 0) {
+          toast.error('No pubs found nearby. Try increasing your search radius.');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Create an optimized pub crawl route
+        const newPubCrawl = await createPubCrawlRoute(location, pubs, options.stops);
+        
+        setPubCrawl(newPubCrawl);
+        setActivePubIndex(0);
+        
+        // Scroll to results
+        if (resultsRef.current) {
+          setTimeout(() => {
+            resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        }
+        
+        toast.success(`Found ${newPubCrawl.places.length} great pubs for your crawl!`);
+      } catch (error) {
+        console.error('Error during pub search:', error);
+        
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        
+        // Check specific API errors
+        if (errorMessage.includes('Places API')) {
+          toast.error(
+            'Google Places API issue detected. Please ensure you have enabled the Places API in your Google Cloud Console.',
+            { 
+              duration: 6000,
+              description: 'Go to Google Cloud Console > APIs & Services > Library > search for "Places API" and click "Enable"' 
+            }
+          );
+        } else if (errorMessage.includes('OVER_QUERY_LIMIT')) {
+          toast.error('You have exceeded your Google Places API quota for today');
+        } else if (errorMessage.includes('ZERO_RESULTS')) {
+          toast.error('No pubs found nearby. Try increasing your search radius.');
+        } else {
+          toast.error('Failed to generate pub crawl. Please try again later.');
+        }
       }
-      
-      // Create an optimized pub crawl route
-      const newPubCrawl = await createPubCrawlRoute(location, pubs, options.stops);
-      
-      setPubCrawl(newPubCrawl);
-      setActivePubIndex(0);
-      
-      // Scroll to results
-      if (resultsRef.current) {
-        setTimeout(() => {
-          resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-      }
-      
-      toast.success(`Found ${newPubCrawl.places.length} great pubs for your crawl!`);
     } catch (error) {
       console.error('Error generating pub crawl:', error);
-      
-      // Check if the error mentions Places API
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes('Places API')) {
-        toast.error('Places API not enabled. Please go to Google Cloud Console, select your project, navigate to "APIs & Services" > "Library", search for "Places API", and click "Enable".');
-      } else {
-        toast.error('Failed to generate pub crawl. Please try again.');
-      }
+      toast.error('Failed to generate pub crawl. Please try again.');
     } finally {
       setIsLoading(false);
     }
