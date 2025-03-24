@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Beer, Ruler, Map } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CrawlOptionsProps {
   onGenerate: (options: CrawlOptionsData) => void;
@@ -15,6 +16,7 @@ export interface CrawlOptionsData {
 const CrawlOptions: React.FC<CrawlOptionsProps> = ({ onGenerate, isLoading }) => {
   const [distance, setDistance] = useState<number>(1);
   const [stops, setStops] = useState<number>(5);
+  const isMobile = useIsMobile();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,14 +24,14 @@ const CrawlOptions: React.FC<CrawlOptionsProps> = ({ onGenerate, isLoading }) =>
   };
   
   return (
-    <div className="glass rounded-2xl p-6 animate-slide-up">
-      <h2 className="text-xl font-medium mb-6 text-center">Create Your Pub Crawl</h2>
+    <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 animate-slide-up">
+      <h2 className="text-lg sm:text-xl font-medium mb-4 sm:mb-6 text-center">Create Your Pub Crawl</h2>
       
       <form onSubmit={handleSubmit}>
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
           <div>
-            <label className="flex items-center text-sm font-medium mb-2 text-muted-foreground">
-              <Ruler className="h-4 w-4 mr-2" />
+            <label className="flex items-center text-xs sm:text-sm font-medium mb-2 text-muted-foreground">
+              <Ruler className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               Search Radius: {distance} km
             </label>
             <input
@@ -48,8 +50,8 @@ const CrawlOptions: React.FC<CrawlOptionsProps> = ({ onGenerate, isLoading }) =>
           </div>
           
           <div>
-            <label className="flex items-center text-sm font-medium mb-2 text-muted-foreground">
-              <Beer className="h-4 w-4 mr-2" />
+            <label className="flex items-center text-xs sm:text-sm font-medium mb-2 text-muted-foreground">
+              <Beer className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               Number of Stops: {stops}
             </label>
             <input
@@ -70,17 +72,17 @@ const CrawlOptions: React.FC<CrawlOptionsProps> = ({ onGenerate, isLoading }) =>
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 rounded-xl bg-primary text-primary-foreground flex items-center justify-center transition-all duration-300 hover:opacity-90 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full py-2 sm:py-3 rounded-lg sm:rounded-xl bg-primary text-primary-foreground flex items-center justify-center transition-all duration-300 hover:opacity-90 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <div className="flex items-center">
-                <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                <span>Generating...</span>
+                <div className="h-4 w-4 sm:h-5 sm:w-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                <span className="text-sm sm:text-base">Generating...</span>
               </div>
             ) : (
               <div className="flex items-center">
-                <Map className="h-5 w-5 mr-2" />
-                <span>Generate Pub Crawl</span>
+                <Map className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+                <span className="text-sm sm:text-base">Generate Pub Crawl</span>
               </div>
             )}
           </button>
