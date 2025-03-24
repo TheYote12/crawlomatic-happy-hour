@@ -5,65 +5,35 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --background: 0 0% 8%; /* Netflix dark background */
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card: 0 0% 10%; /* Slightly lighter than background */
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 240 5.9% 10%;
+    --primary: 357 92% 47%; /* Netflix red */
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 0 0% 15%; /* Dark gray for secondary elements */
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
 
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --accent: 357 92% 47%; /* Netflix red accent */
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 357 92% 47%;
 
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --radius: 0.25rem; /* Netflix uses more squared corners */
   }
 }
 
@@ -73,16 +43,29 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Netflix Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   }
 }
 
 @layer components {
   .glass {
-    @apply backdrop-blur-md bg-background/80 border border-border/50;
+    @apply backdrop-blur-md bg-netflix-dark/90 border border-netflix-gray/30;
   }
 
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-lg hover:scale-[1.02];
+    @apply transition-all duration-300 hover:shadow-lg hover:scale-[1.05] hover:z-10;
+  }
+  
+  .netflix-card {
+    @apply bg-netflix-dark border-none rounded shadow-md hover:shadow-xl transition-all duration-300;
+  }
+  
+  .netflix-button {
+    @apply bg-netflix-red text-white hover:bg-netflix-red/90 transition-colors;
+  }
+  
+  .netflix-gradient {
+    @apply bg-gradient-to-b from-netflix-black/90 via-netflix-black/40 to-transparent;
   }
 }
 
@@ -91,17 +74,17 @@
 }
 
 .mapboxgl-popup-content {
-  @apply rounded-lg shadow-lg p-3 border border-border bg-background;
+  @apply rounded-md shadow-lg p-3 border border-netflix-gray/30 bg-netflix-dark text-white;
 }
 
 .mapboxgl-popup-close-button {
-  @apply text-muted-foreground hover:text-foreground transition-colors;
+  @apply text-netflix-lightgray hover:text-white transition-colors;
 }
 
 .mapboxgl-ctrl-group {
-  @apply !rounded-lg !shadow-lg !border !border-border !bg-background;
+  @apply !rounded-md !shadow-lg !border !border-netflix-gray/30 !bg-netflix-dark;
 }
 
 .mapboxgl-ctrl-group button {
-  @apply !text-foreground hover:!bg-muted transition-colors;
+  @apply !text-netflix-lightgray hover:!bg-netflix-gray/20 transition-colors;
 }
