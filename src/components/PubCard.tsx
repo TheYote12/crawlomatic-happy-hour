@@ -32,7 +32,7 @@ const PubCard: React.FC<PubCardProps> = ({
     }
     
     return (
-      <div className="flex items-center text-muted-foreground">
+      <div className="flex items-center text-gray-500">
         {dollars}
       </div>
     );
@@ -50,14 +50,14 @@ const PubCard: React.FC<PubCardProps> = ({
 
   return (
     <div
-      className={`rounded-lg sm:rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg ${
+      className={`rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-md ${
         isActive 
           ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
-          : 'ring-1 ring-border'
+          : 'ring-1 ring-gray-100'
       }`}
     >
-      <div className={`relative ${isMobile ? 'h-36' : 'h-48'} bg-muted overflow-hidden`}>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent z-10" />
+      <div className={`relative ${isMobile ? 'h-36' : 'h-48'} bg-gray-100 overflow-hidden`}>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent z-10" />
         
         <img 
           src={getImageUrl()} 
@@ -66,12 +66,12 @@ const PubCard: React.FC<PubCardProps> = ({
           loading="lazy"
         />
         
-        <div className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-black/70 text-white rounded-full h-6 w-6 sm:h-8 sm:w-8 flex items-center justify-center text-xs sm:text-sm font-medium z-20">
+        <div className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-primary text-white rounded-full h-6 w-6 sm:h-8 sm:w-8 flex items-center justify-center text-xs sm:text-sm font-medium z-20 shadow-sm">
           {index + 1}
         </div>
         
         {pub.opening_hours?.open_now && (
-          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 bg-green-500/90 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full flex items-center z-20">
+          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 bg-green-500/90 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full flex items-center z-20 shadow-sm">
             <Clock className="h-2 w-2 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
             Open Now
           </div>
@@ -84,7 +84,7 @@ const PubCard: React.FC<PubCardProps> = ({
             onViewDetails?.();
           }}
         >
-          <Button size={isMobile ? "xs" : "sm"} variant="secondary" className="gap-1 text-xs">
+          <Button size={isMobile ? "xs" : "sm"} variant="secondary" className="gap-1 text-xs bg-white/90 hover:bg-white text-gray-800 shadow-sm">
             <Info className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
             Details
           </Button>
@@ -92,12 +92,12 @@ const PubCard: React.FC<PubCardProps> = ({
       </div>
       
       <div 
-        className="p-3 sm:p-4 cursor-pointer"
+        className="p-3 sm:p-4 cursor-pointer bg-white"
         onClick={onClick}
       >
-        <h3 className="font-medium text-base sm:text-lg mb-1 truncate">{pub.name}</h3>
+        <h3 className="font-semibold text-base sm:text-lg mb-1 truncate text-gray-900">{pub.name}</h3>
         
-        <div className="flex items-center text-muted-foreground text-xs sm:text-sm mb-2">
+        <div className="flex items-center text-gray-500 text-xs sm:text-sm mb-2">
           <MapPin className="h-3 w-3 mr-1" />
           <span className="truncate">{pub.vicinity}</span>
         </div>

@@ -66,7 +66,7 @@ const SaveRouteDialog: React.FC<SaveRouteDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] rounded-xl">
         <DialogHeader>
           <DialogTitle>Save Route</DialogTitle>
           <DialogDescription>
@@ -92,19 +92,20 @@ const SaveRouteDialog: React.FC<SaveRouteDialogProps> = ({
               placeholder="Notes about this route..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="resize-none"
+              className="resize-none rounded-lg"
               rows={3}
             />
           </div>
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} className="rounded-full border-gray-200">
             Cancel
           </Button>
           <Button 
             onClick={handleSave} 
             disabled={isSaving || !pubCrawl}
+            className="rounded-full"
           >
             {isSaving ? 'Saving...' : 'Save Route'}
           </Button>

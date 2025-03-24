@@ -12,7 +12,7 @@ import {
 } from './ui/dialog';
 import { 
   Facebook, Twitter, Linkedin, Mail, Link, Copy, 
-  Check, Share2, MapPin
+  Check, Share, MapPin
 } from 'lucide-react';
 import { PubCrawl } from '../utils/mapUtils';
 import { toast } from 'sonner';
@@ -79,7 +79,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md rounded-xl">
         <DialogHeader>
           <DialogTitle>Share Pub Crawl</DialogTitle>
           <DialogDescription>
@@ -90,17 +90,17 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
         <div className="space-y-4 py-4">
           <div className="flex flex-col space-y-2">
             <h3 className="text-sm font-medium">Route Preview:</h3>
-            <div className="bg-muted p-3 rounded-md">
-              <h4 className="font-medium">{title}</h4>
-              <div className="flex flex-wrap gap-1 mt-1 text-sm text-muted-foreground">
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <h4 className="font-medium text-gray-900">{title}</h4>
+              <div className="flex flex-wrap gap-1 mt-1 text-sm text-gray-500">
                 {pubCrawl.places.map((place, idx) => (
                   <div 
                     key={place.id} 
                     className="flex items-center"
                   >
-                    {idx > 0 && <span className="mx-1">→</span>}
+                    {idx > 0 && <span className="mx-1 text-gray-400">→</span>}
                     <span className="flex items-center">
-                      <MapPin className="h-3 w-3 mr-0.5" />
+                      <MapPin className="h-3 w-3 mr-0.5 text-primary" />
                       {place.name}
                     </span>
                   </div>
@@ -114,15 +114,16 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
               <Input
                 readOnly
                 value={url}
-                className="h-9"
+                className="h-9 bg-gray-50 border-gray-200"
               />
             </div>
             <Button 
               size="sm" 
-              className="px-3" 
+              className="px-3 rounded-full" 
+              variant="outline"
               onClick={handleCopyLink}
             >
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-primary" />}
               <span className="sr-only">Copy</span>
             </Button>
           </div>
@@ -131,34 +132,38 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
             <Button
               size="icon"
               variant="outline"
+              className="rounded-full h-9 w-9 border-gray-200"
               onClick={() => window.open(shareLinks.facebook, '_blank')}
               title="Share on Facebook"
             >
-              <Facebook className="h-4 w-4" />
+              <Facebook className="h-4 w-4 text-blue-600" />
             </Button>
             <Button
               size="icon"
               variant="outline"
+              className="rounded-full h-9 w-9 border-gray-200"
               onClick={() => window.open(shareLinks.twitter, '_blank')}
               title="Share on Twitter"
             >
-              <Twitter className="h-4 w-4" />
+              <Twitter className="h-4 w-4 text-sky-500" />
             </Button>
             <Button
               size="icon"
               variant="outline"
+              className="rounded-full h-9 w-9 border-gray-200"
               onClick={() => window.open(shareLinks.linkedin, '_blank')}
               title="Share on LinkedIn"
             >
-              <Linkedin className="h-4 w-4" />
+              <Linkedin className="h-4 w-4 text-blue-700" />
             </Button>
             <Button
               size="icon"
               variant="outline"
+              className="rounded-full h-9 w-9 border-gray-200"
               onClick={() => window.open(shareLinks.email, '_blank')}
               title="Share via Email"
             >
-              <Mail className="h-4 w-4" />
+              <Mail className="h-4 w-4 text-gray-700" />
             </Button>
           </div>
         </div>
@@ -167,6 +172,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
           <Button
             variant="outline"
             onClick={onClose}
+            className="rounded-full border-gray-200"
           >
             Close
           </Button>
@@ -174,9 +180,9 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
           {navigator.share && (
             <Button 
               onClick={handleShare}
-              className="gap-2"
+              className="gap-2 rounded-full"
             >
-              <Share2 className="h-4 w-4" />
+              <Share className="h-4 w-4" />
               Share
             </Button>
           )}

@@ -5,35 +5,35 @@
 
 @layer base {
   :root {
-    --background: 0 0% 8%; /* Netflix dark background */
-    --foreground: 0 0% 98%;
+    --background: 0 0% 100%; /* Apple white background */
+    --foreground: 0 0% 0%;
 
-    --card: 0 0% 10%; /* Slightly lighter than background */
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 98%; /* Very light gray for cards */
+    --card-foreground: 0 0% 3%;
 
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3%;
 
-    --primary: 357 92% 47%; /* Netflix red */
-    --primary-foreground: 0 0% 98%;
+    --primary: 211 100% 50%; /* Apple blue */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 15%; /* Dark gray for secondary elements */
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96%; /* Light gray for secondary elements */
+    --secondary-foreground: 0 0% 9%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 64%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 357 92% 47%; /* Netflix red accent */
-    --accent-foreground: 0 0% 98%;
+    --accent: 211 100% 50%; /* Apple blue accent */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 357 92% 47%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 211 100% 50%;
 
-    --radius: 0.25rem; /* Netflix uses more squared corners */
+    --radius: 0.5rem; /* Apple uses rounded corners */
   }
 }
 
@@ -43,29 +43,29 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Netflix Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
 }
 
 @layer components {
   .glass {
-    @apply backdrop-blur-md bg-netflix-dark/90 border border-netflix-gray/30;
+    @apply backdrop-blur-md bg-white/90 border border-gray-200/30;
   }
 
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-lg hover:scale-[1.05] hover:z-10;
+    @apply transition-all duration-300 hover:shadow-md hover:scale-[1.02] hover:z-10;
   }
   
-  .netflix-card {
-    @apply bg-netflix-dark border-none rounded shadow-md hover:shadow-xl transition-all duration-300;
+  .apple-card {
+    @apply bg-white border border-gray-200/50 rounded-xl shadow-sm hover:shadow-md transition-all duration-300;
   }
   
-  .netflix-button {
-    @apply bg-netflix-red text-white hover:bg-netflix-red/90 transition-colors;
+  .apple-button {
+    @apply bg-primary text-white hover:bg-primary/90 transition-all;
   }
   
-  .netflix-gradient {
-    @apply bg-gradient-to-b from-netflix-black/90 via-netflix-black/40 to-transparent;
+  .apple-gradient {
+    @apply bg-gradient-to-b from-white via-white to-gray-100;
   }
 }
 
@@ -74,17 +74,35 @@
 }
 
 .mapboxgl-popup-content {
-  @apply rounded-md shadow-lg p-3 border border-netflix-gray/30 bg-netflix-dark text-white;
+  @apply rounded-xl shadow-lg p-3 border border-gray-200/30 bg-white text-gray-800;
 }
 
 .mapboxgl-popup-close-button {
-  @apply text-netflix-lightgray hover:text-white transition-colors;
+  @apply text-gray-400 hover:text-gray-800 transition-colors;
 }
 
 .mapboxgl-ctrl-group {
-  @apply !rounded-md !shadow-lg !border !border-netflix-gray/30 !bg-netflix-dark;
+  @apply !rounded-xl !shadow-md !border !border-gray-200/30 !bg-white;
 }
 
 .mapboxgl-ctrl-group button {
-  @apply !text-netflix-lightgray hover:!bg-netflix-gray/20 transition-colors;
+  @apply !text-gray-400 hover:!bg-gray-100/50 transition-colors;
 }
+
+/* Add SF Pro Display font */
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('https://fonts.cdnfonts.com/css/sf-pro-display') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('https://fonts.cdnfonts.com/css/sf-pro-display') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+

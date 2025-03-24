@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { toast } from "sonner";
 import Header from '@/components/Header';
@@ -14,7 +13,7 @@ import {
   searchNearbyPubs, 
   createPubCrawlRoute
 } from '@/utils/mapUtils';
-import { ArrowDown, BookmarkPlus, Share2 } from 'lucide-react';
+import { ChevronDown, BookmarkPlus, ArrowDownToLine } from 'lucide-react';
 import GoogleMapsApiKeyInput from '@/components/GoogleMapsApiKeyInput';
 import { GoogleMapsApiKeyManager } from '@/utils/googleMapsApiKeyManager';
 import PubDetails from '@/components/PubDetails';
@@ -271,17 +270,17 @@ const Index = () => {
             <div className="flex justify-end">
               <Button 
                 variant="outline" 
-                className="gap-2"
+                className="rounded-full px-5 py-2 border border-gray-200 text-gray-800 bg-white hover:bg-gray-50"
                 onClick={() => setShowSavedRoutes(true)}
               >
-                <BookmarkPlus className="h-4 w-4" />
+                <BookmarkPlus className="h-4 w-4 mr-2 text-primary" />
                 Saved Routes
               </Button>
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div 
-                className="h-[30vh] lg:h-[70vh] rounded-2xl overflow-hidden relative"
+                className="h-[30vh] lg:h-[70vh] rounded-3xl overflow-hidden relative shadow-md"
                 style={{ minHeight: '400px' }}
               >
                 <Map 
@@ -309,14 +308,14 @@ const Index = () => {
             {pubCrawl && pubCrawl.places.length > 0 && (
               <>
                 <div className="flex justify-center my-8">
-                  <div className="animate-bounce">
-                    <ArrowDown className="h-6 w-6 text-primary" />
+                  <div className="animate-bounce p-2 bg-white rounded-full shadow-md">
+                    <ChevronDown className="h-6 w-6 text-primary" />
                   </div>
                 </div>
                 
-                <div ref={resultsRef}>
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-medium text-center animate-fade-in">Your Pub Crawl</h2>
+                <div ref={resultsRef} className="bg-white rounded-3xl p-6 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                    <h2 className="text-2xl sm:text-3xl font-medium text-gray-900">Your Pub Crawl</h2>
                     
                     <RouteOptions 
                       pubCrawl={pubCrawl}
