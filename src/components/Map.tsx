@@ -28,45 +28,59 @@ const Map: React.FC<MapProps> = ({
   // Initialize Mapbox
   useEffect(() => {
     if (!mapRef.current) return;
+    console.log("Initializing map with coordinates:", location);
 
     // Initialize map
-    map.current = new mapboxgl.Map({
-      container: mapRef.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [location.longitude, location.latitude],
-      zoom: 15,
-    });
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapRef.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [location.longitude, location.latitude],
+        zoom: 15,
+      });
 
-    // Add navigation controls
-    map.current.addControl(
-      new mapboxgl.NavigationControl(),
-      'top-right'
-    );
+      // Add navigation controls
+      map.current.addControl(
+        new mapboxgl.NavigationControl(),
+        'top-right'
+      );
 
-    // Add user location marker
-    const userMarker = new mapboxgl.Marker({
-      color: '#3b82f6'
-    })
-      .setLngLat([location.longitude, location.latitude])
-      .addTo(map.current);
+      // Add user location marker
+      const userMarker = new mapboxgl.Marker({
+        color: '#3b82f6'
+      })
+        .setLngLat([location.longitude, location.latitude])
+        .addTo(map.current);
 
-    map.current.on('load', () => {
+      map.current.on('load', () => {
+        console.log("Map loaded successfully");
+        setIsLoading(false);
+        if (onMapLoad && map.current) {
+          onMapLoad(map.current);
+        }
+      });
+
+      map.current.on('error', (e) => {
+        console.error("Map error:", e);
+        setIsLoading(false);
+        toast.error("There was an error loading the map");
+      });
+
+      return () => {
+        markers.current.forEach(marker => marker.remove());
+        userMarker.remove();
+        map.current?.remove();
+      };
+    } catch (error) {
+      console.error("Error creating map:", error);
       setIsLoading(false);
-      if (onMapLoad && map.current) {
-        onMapLoad(map.current);
-      }
-    });
-
-    return () => {
-      markers.current.forEach(marker => marker.remove());
-      userMarker.remove();
-      map.current?.remove();
-    };
+    }
   }, [location, onMapLoad]);
 
   // Update markers when pub coordinates change
   useEffect(() => {
     if (!map.current) return;
+    console.log("Updating pub markers:", pubCoordinates.length);
     
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
@@ -98,6 +112,7 @@ const Map: React.FC<MapProps> = ({
   // Pan to active pub when activePubIndex changes
   useEffect(() => {
     if (!map.current || activePubIndex < 0 || activePubIndex >= pubCoordinates.length) return;
+    console.log("Focusing on pub:", activePubIndex);
     
     const activePub = pubCoordinates[activePubIndex];
     map.current.easeTo({

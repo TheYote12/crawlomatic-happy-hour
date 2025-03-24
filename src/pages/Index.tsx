@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { toast } from "sonner";
 import Header from '@/components/Header';
@@ -41,6 +40,7 @@ const Index = () => {
       setIsLoading(true);
       const currentLocation = await getCurrentLocation();
       setLocation(currentLocation);
+      console.log("Location found:", currentLocation);
       toast.success('Location found!');
     } catch (error) {
       console.error('Error getting location:', error);
@@ -53,6 +53,7 @@ const Index = () => {
 
   // Handle map load
   const handleMapLoad = useCallback((map: mapboxgl.Map) => {
+    console.log("Map loaded and ready");
     mapRef.current = map;
     setIsMapLoading(false);
   }, []);
@@ -122,23 +123,17 @@ const Index = () => {
                 className="h-[30vh] lg:h-[70vh] rounded-2xl overflow-hidden relative"
                 style={{ minHeight: '400px' }}
               >
-                {isMapLoading ? (
-                  <div className="h-full w-full flex items-center justify-center bg-muted">
-                    <LoadingSpinner size="large" />
-                  </div>
-                ) : (
-                  <Map 
-                    location={location}
-                    route={pubCrawl?.route || null}
-                    pubCoordinates={(pubCrawl?.places || []).map(place => ({
-                      lat: place.geometry.location.lat,
-                      lng: place.geometry.location.lng,
-                      name: place.name
-                    }))}
-                    activePubIndex={activePubIndex}
-                    onMapLoad={handleMapLoad}
-                  />
-                )}
+                <Map 
+                  location={location}
+                  route={pubCrawl?.route || null}
+                  pubCoordinates={(pubCrawl?.places || []).map(place => ({
+                    lat: place.geometry.location.lat,
+                    lng: place.geometry.location.lng,
+                    name: place.name
+                  }))}
+                  activePubIndex={activePubIndex}
+                  onMapLoad={handleMapLoad}
+                />
               </div>
               
               <div ref={optionsRef}>

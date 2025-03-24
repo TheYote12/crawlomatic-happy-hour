@@ -1,6 +1,7 @@
 
 import { Coordinates } from "./locationUtils";
 import mapboxgl from 'mapbox-gl';
+import { toast } from "sonner";
 
 // Set the Mapbox access token
 mapboxgl.accessToken = 'pk.eyJ1IjoiY2FybG9iZXJyeSIsImEiOiJjbThuY2djbXkxMTJoMm1xMDh2Nmc5NnY1In0.wreOu8QmXIRVUOTLgAZe4A';
