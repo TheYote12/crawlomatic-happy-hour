@@ -1,4 +1,3 @@
-
 import { Coordinates } from "./locationUtils";
 import { toast } from "sonner";
 import { GoogleMapsApiKeyManager } from './googleMapsApiKeyManager';
@@ -105,7 +104,7 @@ export const searchNearbyPubs = async (
         const request = {
           location: new google.maps.LatLng(location.latitude, location.longitude),
           radius,
-          type: ['bar'],
+          type: 'bar', // Fix: Changed from string[] to string
           keyword: 'pub'
         };
         

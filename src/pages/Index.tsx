@@ -25,11 +25,16 @@ const Index = () => {
   const optionsRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Check if Google Maps API key is available on component mount
+  // Set default API key on component mount if not already set
   useEffect(() => {
     const apiKey = GoogleMapsApiKeyManager.getApiKey();
+    console.log("Current API key status:", apiKey ? "Set" : "Not set");
+    
     if (!apiKey) {
-      toast.error('Google Maps API key is not set. Please set your API key to use the map.');
+      // Force set the default key from GoogleMapsApiKeyManager
+      const defaultKey = 'AIzaSyA1I9dNXno-OQUM4fYc-0Fogsr4QQgJ0_E';
+      GoogleMapsApiKeyManager.setApiKey(defaultKey);
+      console.log("Default API key applied");
     }
   }, []);
 
