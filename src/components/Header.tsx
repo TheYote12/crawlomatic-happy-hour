@@ -10,7 +10,7 @@ const Header: React.FC<HeaderProps> = ({ isScrolled }) => {
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-center transition-all duration-300 ${
-        isScrolled ? 'glass shadow-md' : 'bg-transparent'
+        isScrolled ? 'backdrop-blur-md bg-background/80 shadow-md' : 'bg-transparent'
       }`}
     >
       <div className="flex items-center">

@@ -3,6 +3,7 @@ import React from 'react';
 import { Place, getPlacePhotoUrl } from '../utils/mapUtils';
 import { MapPin, Star, Clock, DollarSign, Info } from 'lucide-react';
 import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 
 interface PubCardProps {
   pub: Place;

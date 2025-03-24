@@ -76,6 +76,16 @@
   }
 }
 
+@layer components {
+  .glass {
+    @apply backdrop-blur-md bg-background/80 border border-border/50;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:scale-[1.02];
+  }
+}
+
 .mapboxgl-popup {
   @apply z-50;
 }
@@ -95,4 +105,3 @@
 .mapboxgl-ctrl-group button {
   @apply !text-foreground hover:!bg-muted transition-colors;
 }
-

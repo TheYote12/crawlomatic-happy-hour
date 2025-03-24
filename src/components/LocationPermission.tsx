@@ -13,7 +13,7 @@ const LocationPermission: React.FC<LocationPermissionProps> = ({
 }) => {
   return (
     <div className="flex flex-col items-center justify-center p-8 max-w-md mx-auto text-center animate-fade-in">
-      <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+      <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6 animate-pulse-light">
         <MapPin className="h-8 w-8 text-primary" />
       </div>
       
