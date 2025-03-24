@@ -42,8 +42,10 @@ export const searchNearbyPubs = async (
   maxResults = 10
 ): Promise<Place[]> => {
   try {
-    // For demo purposes, we'll use a more realistic set of mock pubs
-    // In a real app, you would use Mapbox's geocoding API to search for pubs
+    console.log("Searching for pubs near:", location, "with radius:", radius);
+    
+    // For demo purposes, we're using mock data
+    // In a real app, you would use Mapbox's geocoding API or a places API
     const mockPubs: Place[] = [
       {
         id: '1',
@@ -124,10 +126,11 @@ export const searchNearbyPubs = async (
       }
     ];
 
-    // For realism, we'll slice according to maxResults
+    console.log("Found mock pubs:", mockPubs.length);
     return mockPubs.slice(0, maxResults);
   } catch (error) {
     console.error('Error searching for pubs:', error);
+    toast.error('Failed to search for pubs');
     throw new Error('Failed to search for pubs');
   }
 };

@@ -4,6 +4,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Coordinates } from '../utils/locationUtils';
 import LoadingSpinner from './LoadingSpinner';
+import { toast } from "sonner";
 
 interface MapProps {
   location: Coordinates;
