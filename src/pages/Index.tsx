@@ -10,6 +10,8 @@ import { getCurrentLocation, Coordinates } from '@/utils/locationUtils';
 import { Place, PubCrawl, searchNearbyPubs, createPubCrawlRoute } from '@/utils/mapUtils';
 import { ArrowDown, Loader2 } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
+import MapboxApiKeyInput from '@/components/MapboxApiKeyInput';
+import { MapboxApiKeyManager } from '@/utils/mapboxApiKeyManager';
 
 const Index = () => {
   const [location, setLocation] = useState<Coordinates | null>(null);
@@ -22,6 +24,14 @@ const Index = () => {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Check if Mapbox API key is available on component mount
+  useEffect(() => {
+    const apiKey = MapboxApiKeyManager.getApiKey();
+    if (!apiKey) {
+      toast.error('Mapbox API key is not set. Please set your API key to use the map.');
+    }
+  }, []);
 
   // Handle scroll events
   useEffect(() => {
@@ -69,11 +79,19 @@ const Index = () => {
       
       const radiusInMeters = options.distance * 1000;
       
+      // Check if Mapbox API key is available
+      if (!MapboxApiKeyManager.isKeyValid()) {
+        toast.error('Please set a valid Mapbox API key to search for pubs');
+        setIsLoading(false);
+        return;
+      }
+      
       // Search for pubs near the user's location
       const pubs = await searchNearbyPubs(location, radiusInMeters, mapRef.current, options.stops * 2);
       
       if (pubs.length === 0) {
         toast.error('No pubs found nearby. Try increasing your search radius.');
+        setIsLoading(false);
         return;
       }
       
@@ -134,6 +152,7 @@ const Index = () => {
                   activePubIndex={activePubIndex}
                   onMapLoad={handleMapLoad}
                 />
+                <MapboxApiKeyInput />
               </div>
               
               <div ref={optionsRef}>
