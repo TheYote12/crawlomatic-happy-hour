@@ -30,8 +30,6 @@ const Map: React.FC<MapProps> = ({
     if (!mapRef.current) return;
 
     // Initialize map
-    mapboxgl.accessToken = 'YOUR_MAPBOX_PUBLIC_TOKEN';
-    
     map.current = new mapboxgl.Map({
       container: mapRef.current,
       style: 'mapbox://styles/mapbox/streets-v12',
@@ -52,18 +50,19 @@ const Map: React.FC<MapProps> = ({
       .setLngLat([location.longitude, location.latitude])
       .addTo(map.current);
 
-    if (onMapLoad && map.current) {
-      onMapLoad(map.current);
-    }
-
-    setIsLoading(false);
+    map.current.on('load', () => {
+      setIsLoading(false);
+      if (onMapLoad && map.current) {
+        onMapLoad(map.current);
+      }
+    });
 
     return () => {
       markers.current.forEach(marker => marker.remove());
       userMarker.remove();
       map.current?.remove();
     };
-  }, [location]);
+  }, [location, onMapLoad]);
 
   // Update markers when pub coordinates change
   useEffect(() => {
@@ -94,7 +93,7 @@ const Map: React.FC<MapProps> = ({
         
       return marker;
     });
-  }, [map.current, pubCoordinates]);
+  }, [pubCoordinates]);
 
   // Pan to active pub when activePubIndex changes
   useEffect(() => {
@@ -108,7 +107,7 @@ const Map: React.FC<MapProps> = ({
     
     // Show popup for active marker
     markers.current[activePubIndex]?.togglePopup();
-  }, [map.current, activePubIndex, pubCoordinates]);
+  }, [activePubIndex, pubCoordinates]);
 
   return (
     <div className="relative h-full w-full rounded-2xl overflow-hidden shadow-lg">
@@ -124,4 +123,3 @@ const Map: React.FC<MapProps> = ({
 };
 
 export default Map;
-

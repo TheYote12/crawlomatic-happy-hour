@@ -10,44 +10,17 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { getCurrentLocation, Coordinates } from '@/utils/locationUtils';
 import { Place, PubCrawl, searchNearbyPubs, createPubCrawlRoute } from '@/utils/mapUtils';
 import { ArrowDown, Loader2 } from 'lucide-react';
-
-// Script to load Google Maps API
-const loadGoogleMapsScript = () => {
-  return new Promise<void>((resolve, reject) => {
-    if (window.google && window.google.maps) {
-      resolve();
-      return;
-    }
-
-    // Placeholder API key - in a real app, you would use your own API key
-    // and properly secure it server-side or with restrictions
-    const API_KEY = "YOUR_GOOGLE_MAPS_API_KEY";
-
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=initMap`;
-    script.async = true;
-    script.defer = true;
-    script.onerror = reject;
-    
-    // Define the callback function
-    window.initMap = () => {
-      resolve();
-    };
-    
-    document.head.appendChild(script);
-  });
-};
+import mapboxgl from 'mapbox-gl';
 
 const Index = () => {
   const [location, setLocation] = useState<Coordinates | null>(null);
   const [locationError, setLocationError] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const [isMapLoading, setIsMapLoading] = useState(true);
-  const [mapsLoaded, setMapsLoaded] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [pubCrawl, setPubCrawl] = useState<PubCrawl | null>(null);
   const [activePubIndex, setActivePubIndex] = useState(-1);
-  const mapRef = useRef<google.maps.Map | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -59,22 +32,6 @@ const Index = () => {
     
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Load Google Maps API
-  useEffect(() => {
-    const loadMaps = async () => {
-      try {
-        await loadGoogleMapsScript();
-        setMapsLoaded(true);
-        setIsMapLoading(false);
-      } catch (error) {
-        console.error('Failed to load Google Maps:', error);
-        toast.error('Failed to load Google Maps. Please reload the page.');
-      }
-    };
-    
-    loadMaps();
   }, []);
 
   // Handle location request
@@ -95,8 +52,9 @@ const Index = () => {
   }, []);
 
   // Handle map load
-  const handleMapLoad = useCallback((map: google.maps.Map) => {
+  const handleMapLoad = useCallback((map: mapboxgl.Map) => {
     mapRef.current = map;
+    setIsMapLoading(false);
   }, []);
 
   // Generate pub crawl
@@ -164,7 +122,7 @@ const Index = () => {
                 className="h-[30vh] lg:h-[70vh] rounded-2xl overflow-hidden relative"
                 style={{ minHeight: '400px' }}
               >
-                {isMapLoading || !mapsLoaded ? (
+                {isMapLoading ? (
                   <div className="h-full w-full flex items-center justify-center bg-muted">
                     <LoadingSpinner size="large" />
                   </div>
