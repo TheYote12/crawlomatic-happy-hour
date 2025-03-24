@@ -48,9 +48,20 @@ const GoogleMapsApiKeyInput: React.FC = () => {
           const service = new google.maps.places.PlacesService(dummyDiv);
           
           if (service) {
-            toast.success('Places API is correctly configured!', {
-              description: 'Make sure you have also enabled billing in your Google Cloud Console for the API to work.'
-            });
+            // Now also check if Place Autocomplete (part of Places Aggregate) is available
+            try {
+              const autocompleteService = new google.maps.places.AutocompleteService();
+              if (autocompleteService) {
+                toast.success('Places APIs are correctly configured!', {
+                  description: 'Places API and Places Autocomplete API are working. Make sure billing is enabled in Google Cloud Console.'
+                });
+              }
+            } catch (autocompleteError) {
+              toast.warning('Places API is working, but Autocomplete API might not be enabled', {
+                description: 'Enable Places API and billing in Google Cloud Console for full functionality.'
+              });
+              console.error('Autocomplete API error:', autocompleteError);
+            }
           } else {
             toast.error('Places API loaded but service could not be created');
           }
