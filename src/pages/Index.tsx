@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { toast } from "sonner";
 import Header from '@/components/Header';
@@ -24,12 +25,12 @@ const Index = () => {
   const optionsRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Set API key on component mount if not already set
+  // Check if Google Maps API key is available on component mount
   useEffect(() => {
-    // Force set the default key to ensure it's always available
-    const defaultKey = 'AIzaSyA1I9dNXno-OQUM4fYc-0Fogsr4QQgJ0_E';
-    GoogleMapsApiKeyManager.setApiKey(defaultKey);
-    console.log("API key initialized");
+    const apiKey = GoogleMapsApiKeyManager.getApiKey();
+    if (!apiKey) {
+      toast.error('Google Maps API key is not set. Please set your API key to use the map.');
+    }
   }, []);
 
   // Handle scroll events

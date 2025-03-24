@@ -11,8 +11,21 @@ export class GoogleMapsApiKeyManager {
    * Gets the Google Maps API key from localStorage or uses the default one
    */
   static getApiKey(): string {
-    // Always return the default token for now to fix the issue
-    return DEFAULT_TOKEN;
+    // Try to get the key from localStorage first
+    const savedKey = localStorage.getItem(STORAGE_KEY);
+    
+    if (savedKey && savedKey.trim() !== '') {
+      return savedKey;
+    }
+    
+    // If no key is saved, use the default token and save it
+    if (DEFAULT_TOKEN && DEFAULT_TOKEN.trim() !== '') {
+      localStorage.setItem(STORAGE_KEY, DEFAULT_TOKEN);
+      return DEFAULT_TOKEN;
+    }
+    
+    // If no key is available, return empty string
+    return '';
   }
   
   /**
@@ -24,12 +37,11 @@ export class GoogleMapsApiKeyManager {
       return;
     }
     
-    // Save the key but don't use it for now
     localStorage.setItem(STORAGE_KEY, apiKey);
-    console.log("Google Maps API key updated");
     toast.success('Google Maps API key saved successfully');
     
-    // Don't reload the page
+    // Reload the page to apply the new key
+    window.location.reload();
   }
   
   /**
@@ -38,7 +50,6 @@ export class GoogleMapsApiKeyManager {
   static resetToDefault(): void {
     if (DEFAULT_TOKEN && DEFAULT_TOKEN.trim() !== '') {
       localStorage.setItem(STORAGE_KEY, DEFAULT_TOKEN);
-      console.log("Reset to default Google Maps API key");
       toast.success('Reset to default Google Maps API key');
       
       // Reload the page to apply the new key
@@ -52,7 +63,7 @@ export class GoogleMapsApiKeyManager {
    * Checks if the API key is valid
    */
   static isKeyValid(): boolean {
-    // Always return true since we're using the default key
-    return true;
+    const key = this.getApiKey();
+    return Boolean(key && key.trim() !== '' && key.length > 20);
   }
 }
