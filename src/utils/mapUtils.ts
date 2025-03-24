@@ -42,73 +42,80 @@ export const searchNearbyPubs = async (
   try {
     console.log("Searching for pubs near:", location, "with radius:", radius);
     
-    // In a real production app, we would fetch real pub data 
-    // from the Mapbox Places API or similar
-    // For now, we're generating more realistic mock data based on the actual location
-    const mockPubs: Place[] = generateRealisticPubs(location, radius, maxResults);
-
-    console.log("Found mock pubs:", mockPubs.length);
-    return mockPubs;
+    const apiKey = MapboxApiKeyManager.getApiKey();
+    if (!apiKey) {
+      throw new Error("Mapbox API key is not set");
+    }
+    
+    // Calculate the bounding box for the search area
+    const metersToDegreesApprox = 0.00001;
+    const radiusInDegrees = radius * metersToDegreesApprox * 111;
+    
+    // Create the bounding box coordinates
+    const bbox = [
+      location.longitude - radiusInDegrees, 
+      location.latitude - radiusInDegrees,
+      location.longitude + radiusInDegrees, 
+      location.latitude + radiusInDegrees
+    ].join(',');
+    
+    // Define the search parameters for pubs and bars
+    const searchParams = new URLSearchParams({
+      access_token: apiKey,
+      limit: maxResults.toString(),
+      bbox: bbox,
+      types: 'poi',
+      proximity: `${location.longitude},${location.latitude}`,
+      category: 'bar,pub'
+    });
+    
+    // Make the API request to Mapbox
+    const response = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/pub.json?${searchParams.toString()}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Mapbox API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log("Mapbox API response:", data);
+    
+    // Transform the Mapbox response to our Place interface
+    const places: Place[] = data.features.map((feature: any) => {
+      const id = feature.id;
+      const name = feature.text || "Unnamed Pub";
+      const vicinity = feature.place_name || "";
+      
+      // Extract coordinates
+      const [longitude, latitude] = feature.center;
+      
+      // Create a Place object from the Mapbox feature
+      return {
+        id,
+        name,
+        vicinity,
+        rating: feature.properties?.rating || (Math.random() * 2 + 3).toFixed(1),
+        geometry: {
+          location: {
+            lat: latitude,
+            lng: longitude
+          }
+        },
+        opening_hours: {
+          open_now: true // We don't have real data for this from Mapbox
+        },
+        price_level: feature.properties?.price_level || Math.floor(Math.random() * 3) + 1
+      };
+    });
+    
+    console.log("Found pubs:", places.length);
+    return places;
   } catch (error) {
     console.error('Error searching for pubs:', error);
     toast.error('Failed to search for pubs');
     throw new Error('Failed to search for pubs');
   }
-};
-
-/**
- * Generates realistic mock pubs around a given location
- */
-const generateRealisticPubs = (
-  center: Coordinates, 
-  radiusInMeters: number,
-  count: number
-): Place[] => {
-  const pubs: Place[] = [];
-  const pubNames = [
-    "The Red Lion", "The Crown", "The Royal Oak", "The White Hart", 
-    "The Kings Arms", "The Queens Head", "The Black Bull", "The Anchor",
-    "The Swan", "The Fox & Hounds", "The Rose & Crown", "The Green Man",
-    "The Plough", "The Bell", "The Ship", "The Duke's Head",
-    "The George & Dragon", "The Coach & Horses", "The White Horse", "The Star Inn"
-  ];
-  
-  const streets = [
-    "High Street", "Main Street", "Church Road", "Station Road", 
-    "Park Avenue", "Castle Street", "Bridge Road", "Mill Lane",
-    "Market Square", "Queen Street", "King Street", "Victoria Road"
-  ];
-  
-  // Convert radius from meters to degrees (roughly)
-  const radiusInDegrees = radiusInMeters / 111000;
-  
-  for (let i = 0; i < count && i < pubNames.length; i++) {
-    // Generate a random point within the radius
-    const random_angle = Math.random() * Math.PI * 2;
-    const random_radius = Math.random() * radiusInDegrees;
-    
-    const x = center.longitude + random_radius * Math.cos(random_angle);
-    const y = center.latitude + random_radius * Math.sin(random_angle);
-    
-    pubs.push({
-      id: `pub-${i}`,
-      name: pubNames[i],
-      vicinity: `${Math.floor(Math.random() * 200)} ${streets[Math.floor(Math.random() * streets.length)]}`,
-      rating: Math.round((3 + Math.random() * 2) * 10) / 10, // Rating between 3 and 5
-      geometry: {
-        location: {
-          lat: y,
-          lng: x
-        }
-      },
-      opening_hours: {
-        open_now: Math.random() > 0.2 // 80% chance of being open
-      },
-      price_level: Math.floor(Math.random() * 3) + 1 // Price level between 1 and 3
-    });
-  }
-  
-  return pubs;
 };
 
 /**
@@ -119,44 +126,97 @@ export const createPubCrawlRoute = async (
   places: Place[],
   maxStops: number
 ): Promise<PubCrawl> => {
-  // Filter places to include only the requested number of stops
-  const filteredPlaces = places.slice(0, maxStops);
-  
-  // Calculate distances between locations
-  let totalDistance = 0;
-  let totalDuration = 0;
-  
-  // In a real app, we would use the Mapbox Directions API to get actual routes and distances
-  // For now, we'll calculate rough estimates based on direct distances
-  const locations = [startLocation, ...filteredPlaces.map(place => ({
-    latitude: place.geometry.location.lat,
-    longitude: place.geometry.location.lng
-  }))];
-  
-  for (let i = 0; i < locations.length - 1; i++) {
-    const from = locations[i];
-    const to = locations[i + 1];
+  try {
+    // Filter places to include only the requested number of stops
+    const filteredPlaces = places.slice(0, maxStops);
     
-    // Calculate direct distance
-    const distance = calculateDirectDistance(from, to);
-    totalDistance += distance;
-    
-    // Estimate walking time (assuming 5 km/h walking speed)
-    const durationInMinutes = (distance / 5) * 60;
-    totalDuration += durationInMinutes;
-    
-    // Add 30 minutes for each pub visit
-    if (i < locations.length - 2) {
-      totalDuration += 30;
+    if (filteredPlaces.length === 0) {
+      throw new Error("No places found for the route");
     }
+
+    const apiKey = MapboxApiKeyManager.getApiKey();
+    if (!apiKey) {
+      throw new Error("Mapbox API key is not set");
+    }
+    
+    // Create waypoints for the Directions API
+    const coordinates = [
+      [startLocation.longitude, startLocation.latitude],
+      ...filteredPlaces.map(place => [
+        place.geometry.location.lng,
+        place.geometry.location.lat
+      ])
+    ];
+    
+    // Format coordinates for the API request
+    const coordinatesString = coordinates.map(coord => coord.join(',')).join(';');
+    
+    // Make the API request to get the route
+    const response = await fetch(
+      `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinatesString}?` +
+      `alternatives=false&geometries=geojson&overview=full&steps=false&access_token=${apiKey}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Mapbox Directions API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log("Directions API response:", data);
+    
+    // Calculate total distance and duration from the response
+    let totalDistance = 0;
+    let totalDuration = 0;
+    
+    if (data.routes && data.routes.length > 0) {
+      totalDistance = data.routes[0].distance / 1000; // Convert to kilometers
+      totalDuration = data.routes[0].duration / 60; // Convert to minutes
+      
+      // Add time for each pub visit (30 minutes per pub)
+      totalDuration += filteredPlaces.length * 30;
+    } else {
+      // Fallback to direct distance calculation if no routes are returned
+      totalDistance = calculateTotalDirectDistance(
+        startLocation,
+        filteredPlaces.map(place => ({
+          latitude: place.geometry.location.lat,
+          longitude: place.geometry.location.lng
+        }))
+      );
+      
+      // Estimate walking time (assuming 5 km/h walking speed)
+      totalDuration = (totalDistance / 5) * 60;
+      
+      // Add time for each pub visit (30 minutes per pub)
+      totalDuration += filteredPlaces.length * 30;
+    }
+    
+    return {
+      places: filteredPlaces,
+      route: data.routes && data.routes.length > 0 ? data.routes[0] : null,
+      totalDistance,
+      totalDuration
+    };
+  } catch (error) {
+    console.error('Error creating pub crawl route:', error);
+    toast.error('Failed to create route');
+    throw new Error('Failed to create route');
+  }
+};
+
+/**
+ * Calculate total direct distance between a series of coordinates
+ */
+const calculateTotalDirectDistance = (start: Coordinates, points: Coordinates[]): number => {
+  let totalDistance = 0;
+  let currentPoint = start;
+  
+  for (const point of points) {
+    totalDistance += calculateDirectDistance(currentPoint, point);
+    currentPoint = point;
   }
   
-  return {
-    places: filteredPlaces,
-    route: null,
-    totalDistance,
-    totalDuration
-  };
+  return totalDistance;
 };
 
 /**
@@ -186,7 +246,7 @@ const toRadians = (degrees: number): number => {
  * Gets a photo URL for a place
  */
 export const getPlacePhotoUrl = (photoReference: string, maxWidth = 400): string => {
-  // Using Unsplash for more realistic pub images
+  // Since Mapbox doesn't provide pub images, we still use Unsplash for images
   return `https://source.unsplash.com/featured/600x400/?pub,bar,tavern&sig=${photoReference}`;
 };
 

@@ -27,7 +27,7 @@ const Map: React.FC<MapProps> = ({
   const markers = useRef<mapboxgl.Marker[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMapError, setIsMapError] = useState(false);
-  const [routeLine, setRouteLine] = useState<mapboxgl.Map | null>(null);
+  const [routeDisplayed, setRouteDisplayed] = useState(false);
 
   // Initialize Mapbox
   useEffect(() => {
@@ -74,11 +74,6 @@ const Map: React.FC<MapProps> = ({
         if (onMapLoad && map.current) {
           onMapLoad(map.current);
         }
-        
-        // If we have pub coordinates, draw the route once the map loads
-        if (pubCoordinates.length > 1 && map.current) {
-          drawRoute(map.current, [location, ...pubCoordinates.map(p => ({ latitude: p.lat, longitude: p.lng }))]);
-        }
       });
 
       map.current.on('error', (e) => {
@@ -108,53 +103,73 @@ const Map: React.FC<MapProps> = ({
     }
   }, [location, onMapLoad]);
 
-  // Draw a route between coordinates
-  const drawRoute = (mapInstance: mapboxgl.Map, waypoints: Coordinates[]) => {
-    if (waypoints.length < 2) return;
+  // Draw the route when route data is available
+  useEffect(() => {
+    if (!map.current || !map.current.loaded() || !route) return;
+    console.log("Drawing route from API data");
     
-    // Create a LineString from the coordinates
-    const lineString = {
-      type: 'Feature',
-      properties: {},
-      geometry: {
-        type: 'LineString',
-        coordinates: waypoints.map(point => [point.longitude, point.latitude])
+    try {
+      // Remove previous route if it exists
+      if (routeDisplayed && map.current.getLayer('route')) {
+        map.current.removeLayer('route');
+        map.current.removeSource('route');
+        setRouteDisplayed(false);
       }
-    };
-    
-    // Add the line to the map
-    if (mapInstance.getSource('route')) {
-      // Update existing source
-      (mapInstance.getSource('route') as mapboxgl.GeoJSONSource).setData(
-        lineString as unknown as GeoJSON.Feature<GeoJSON.Geometry>
-      );
-    } else {
-      // Add new source and layer
-      mapInstance.addSource('route', {
-        type: 'geojson',
-        data: lineString as unknown as GeoJSON.Feature<GeoJSON.Geometry>
-      });
       
-      mapInstance.addLayer({
-        id: 'route',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#3b82f6',
-          'line-width': 4,
-          'line-opacity': 0.7
+      // Add the route from the Directions API
+      if (route.geometry) {
+        map.current.addSource('route', {
+          'type': 'geojson',
+          'data': {
+            'type': 'Feature',
+            'properties': {},
+            'geometry': route.geometry
+          }
+        });
+        
+        map.current.addLayer({
+          'id': 'route',
+          'type': 'line',
+          'source': 'route',
+          'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          'paint': {
+            'line-color': '#3b82f6',
+            'line-width': 4,
+            'line-opacity': 0.7
+          }
+        });
+        
+        setRouteDisplayed(true);
+        
+        // Fit the map to the route
+        if (pubCoordinates.length > 0) {
+          const bounds = new mapboxgl.LngLatBounds();
+          
+          // Add the user location to the bounds
+          bounds.extend([location.longitude, location.latitude]);
+          
+          // Add all pub locations to the bounds
+          for (const pub of pubCoordinates) {
+            bounds.extend([pub.lng, pub.lat]);
+          }
+          
+          map.current.fitBounds(bounds, {
+            padding: 50,
+            maxZoom: 15
+          });
         }
-      });
+      }
+    } catch (error) {
+      console.error("Error drawing route:", error);
     }
-  };
+  }, [route, location, pubCoordinates, routeDisplayed]);
 
   // Update markers when pub coordinates change
   useEffect(() => {
-    if (!map.current) return;
+    if (!map.current || !map.current.loaded()) return;
     console.log("Updating pub markers:", pubCoordinates.length);
     
     // Clear existing markers
@@ -183,11 +198,24 @@ const Map: React.FC<MapProps> = ({
       return marker;
     });
     
-    // Draw route if we have pub coordinates
-    if (pubCoordinates.length > 1 && map.current.loaded()) {
-      drawRoute(map.current, [location, ...pubCoordinates.map(p => ({ latitude: p.lat, longitude: p.lng }))]);
+    // If we have pub coordinates but no route yet, fit the map to include all pubs
+    if (pubCoordinates.length > 0 && !route && map.current) {
+      const bounds = new mapboxgl.LngLatBounds();
+      
+      // Add the user location to the bounds
+      bounds.extend([location.longitude, location.latitude]);
+      
+      // Add all pub locations to the bounds
+      for (const pub of pubCoordinates) {
+        bounds.extend([pub.lng, pub.lat]);
+      }
+      
+      map.current.fitBounds(bounds, {
+        padding: 50,
+        maxZoom: 15
+      });
     }
-  }, [pubCoordinates, location]);
+  }, [pubCoordinates, location, route]);
 
   // Pan to active pub when activePubIndex changes
   useEffect(() => {
@@ -197,7 +225,7 @@ const Map: React.FC<MapProps> = ({
     const activePub = pubCoordinates[activePubIndex];
     map.current.easeTo({
       center: [activePub.lng, activePub.lat],
-      zoom: 15
+      zoom: 16
     });
     
     // Show popup for active marker
