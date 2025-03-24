@@ -377,6 +377,11 @@ export const getPlacePhotoUrl = (photoReference: string, maxWidth = 400): string
   const apiKey = GoogleMapsApiKeyManager.getApiKey();
   
   if (apiKey && photoReference) {
+    // Check if photoReference is already a full URL
+    if (photoReference.startsWith('http')) {
+      return photoReference;
+    }
+    
     // Use the Places Photos API
     return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photoreference=${photoReference}&key=${apiKey}`;
   }

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Place } from '../utils/mapUtils';
+import { Place, getPlacePhotoUrl } from '../utils/mapUtils';
 import { MapPin, Star, Clock, DollarSign, Info } from 'lucide-react';
 import { Button } from './ui/button';
 
@@ -35,8 +35,12 @@ const PubCard: React.FC<PubCardProps> = ({
   };
 
   const getImageUrl = () => {
-    // In a real app, you would use the Google Places API to get images
-    // For this demo, we'll use a placeholder
+    // Try to get the first actual photo from the pub
+    if (pub.photos && pub.photos.length > 0 && pub.photos[0].photo_reference) {
+      return getPlacePhotoUrl(pub.photos[0].photo_reference);
+    }
+    
+    // Fallback to a placeholder if no photos available
     return `https://source.unsplash.com/random/400x200/?pub,bar&sig=${pub.id}`;
   };
 
