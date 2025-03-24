@@ -1,16 +1,24 @@
 
 import React from 'react';
 import { Place } from '../utils/mapUtils';
-import { MapPin, Star, Clock, DollarSign } from 'lucide-react';
+import { MapPin, Star, Clock, DollarSign, Info } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface PubCardProps {
   pub: Place;
   index: number;
   isActive?: boolean;
   onClick?: () => void;
+  onViewDetails?: () => void;
 }
 
-const PubCard: React.FC<PubCardProps> = ({ pub, index, isActive = false, onClick }) => {
+const PubCard: React.FC<PubCardProps> = ({ 
+  pub, 
+  index, 
+  isActive = false, 
+  onClick,
+  onViewDetails
+}) => {
   const renderPriceLevel = () => {
     if (pub.price_level === undefined) return null;
     
@@ -39,7 +47,6 @@ const PubCard: React.FC<PubCardProps> = ({ pub, index, isActive = false, onClick
           ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
           : 'ring-1 ring-border'
       }`}
-      onClick={onClick}
     >
       <div className="relative h-48 bg-muted overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent z-10" />
@@ -61,9 +68,25 @@ const PubCard: React.FC<PubCardProps> = ({ pub, index, isActive = false, onClick
             Open Now
           </div>
         )}
+        
+        <div 
+          className="absolute bottom-3 right-3 z-20"
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewDetails?.();
+          }}
+        >
+          <Button size="sm" variant="secondary" className="gap-1">
+            <Info className="h-3 w-3" />
+            Details
+          </Button>
+        </div>
       </div>
       
-      <div className="p-4">
+      <div 
+        className="p-4 cursor-pointer"
+        onClick={onClick}
+      >
         <h3 className="font-medium text-lg mb-1 truncate">{pub.name}</h3>
         
         <div className="flex items-center text-muted-foreground text-sm mb-2">

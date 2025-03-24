@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { toast } from "sonner";
 import Header from '@/components/Header';
@@ -9,9 +8,16 @@ import PubList from '@/components/PubList';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { getCurrentLocation, Coordinates } from '@/utils/locationUtils';
 import { Place, PubCrawl, searchNearbyPubs, createPubCrawlRoute } from '@/utils/mapUtils';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, BookmarkPlus, Share2, RotateCcw } from 'lucide-react';
 import GoogleMapsApiKeyInput from '@/components/GoogleMapsApiKeyInput';
 import { GoogleMapsApiKeyManager } from '@/utils/googleMapsApiKeyManager';
+import PubDetails from '@/components/PubDetails';
+import SaveRouteDialog from '@/components/SaveRouteDialog';
+import SavedRoutes from '@/components/SavedRoutes';
+import ShareDialog from '@/components/ShareDialog';
+import RouteOptions, { OptimizePreference } from '@/components/RouteOptions';
+import { SavedRoute } from '@/utils/savedRoutesManager';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const [location, setLocation] = useState<Coordinates | null>(null);
@@ -21,9 +27,15 @@ const Index = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [pubCrawl, setPubCrawl] = useState<PubCrawl | null>(null);
   const [activePubIndex, setActivePubIndex] = useState(-1);
+  const [selectedPub, setSelectedPub] = useState<Place | null>(null);
+  const [showPubDetails, setShowPubDetails] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showSavedRoutes, setShowSavedRoutes] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const lastOptionsRef = useRef<CrawlOptionsData | null>(null);
 
   // Set default API key on component mount if not already set
   useEffect(() => {
@@ -81,6 +93,7 @@ const Index = () => {
       setIsLoading(true);
       setPubCrawl(null);
       setActivePubIndex(-1);
+      lastOptionsRef.current = options;
       
       const radiusInMeters = options.distance * 1000;
       
@@ -151,6 +164,90 @@ const Index = () => {
     setActivePubIndex(index);
   }, []);
 
+  // Handle pub details click
+  const handlePubDetailsClick = useCallback((pub: Place) => {
+    setSelectedPub(pub);
+    setShowPubDetails(true);
+  }, []);
+
+  // Handle loading a saved route
+  const handleLoadSavedRoute = useCallback((savedRoute: SavedRoute) => {
+    setPubCrawl(savedRoute.pubCrawl);
+    setActivePubIndex(0);
+    
+    // Scroll to results
+    if (resultsRef.current) {
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+    
+    toast.success(`Loaded route: ${savedRoute.name}`);
+  }, []);
+
+  // Handle route optimization
+  const handleOptimizeRoute = useCallback((preference: OptimizePreference) => {
+    if (!pubCrawl || !location) {
+      toast.error('No route to optimize');
+      return;
+    }
+    
+    // In a real app, this would call an API to optimize the route based on preference
+    // For this demo, we'll just simulate optimization with a delay
+    toast.info(`Optimizing route for ${preference}...`);
+    setIsLoading(true);
+    
+    setTimeout(() => {
+      try {
+        // Create a copy of the pub crawl to simulate optimization
+        const optimizedCrawl = {...pubCrawl};
+        
+        // Simulate different optimizations
+        if (preference === 'distance') {
+          // Sort by distance from current pub
+          optimizedCrawl.places = [...optimizedCrawl.places].sort((a, b) => {
+            if (!activePubIndex || activePubIndex < 0) return 0;
+            const currentPub = optimizedCrawl.places[activePubIndex];
+            const distA = calculateDistance(currentPub, a);
+            const distB = calculateDistance(currentPub, b);
+            return distA - distB;
+          });
+        } else if (preference === 'price') {
+          // Sort by price level (lowest first)
+          optimizedCrawl.places = [...optimizedCrawl.places].sort((a, b) => {
+            return (a.price_level || 999) - (b.price_level || 999);
+          });
+        } else if (preference === 'atmosphere') {
+          // Sort by rating (highest first)
+          optimizedCrawl.places = [...optimizedCrawl.places].sort((a, b) => {
+            return (b.rating || 0) - (a.rating || 0);
+          });
+        }
+        
+        // Update routes in a real app would recalculate this
+        setPubCrawl(optimizedCrawl);
+        setActivePubIndex(0);
+        
+        toast.success(`Route optimized for ${preference}`);
+      } catch (error) {
+        console.error('Error optimizing route:', error);
+        toast.error('Failed to optimize route');
+      } finally {
+        setIsLoading(false);
+      }
+    }, 1500);
+  }, [pubCrawl, location, activePubIndex]);
+
+  // Helper function to calculate distance between two pubs
+  const calculateDistance = (pub1: Place, pub2: Place): number => {
+    const lat1 = pub1.geometry.location.lat;
+    const lng1 = pub1.geometry.location.lng;
+    const lat2 = pub2.geometry.location.lat;
+    const lng2 = pub2.geometry.location.lng;
+    
+    return Math.sqrt(Math.pow(lat2 - lat1, 2) + Math.pow(lng2 - lng1, 2));
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header isScrolled={isScrolled} />
@@ -165,6 +262,17 @@ const Index = () => {
           </div>
         ) : (
           <div className="space-y-8 pt-8">
+            <div className="flex justify-end">
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={() => setShowSavedRoutes(true)}
+              >
+                <BookmarkPlus className="h-4 w-4" />
+                Saved Routes
+              </Button>
+            </div>
+            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div 
                 className="h-[30vh] lg:h-[70vh] rounded-2xl overflow-hidden relative"
@@ -201,19 +309,59 @@ const Index = () => {
                 </div>
                 
                 <div ref={resultsRef}>
-                  <h2 className="text-2xl font-medium mb-6 text-center animate-fade-in">Your Pub Crawl</h2>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-medium text-center animate-fade-in">Your Pub Crawl</h2>
+                    
+                    <RouteOptions 
+                      pubCrawl={pubCrawl}
+                      onSave={() => setShowSaveDialog(true)}
+                      onShare={() => setShowShareDialog(true)}
+                      onOptimize={handleOptimizeRoute}
+                    />
+                  </div>
+                  
                   <PubList 
                     pubs={pubCrawl.places}
                     totalDistance={pubCrawl.totalDistance}
                     totalDuration={pubCrawl.totalDuration}
                     activePubIndex={activePubIndex}
                     onPubClick={handlePubClick}
+                    onViewDetails={handlePubDetailsClick}
                   />
                 </div>
               </>
             )}
           </div>
         )}
+        
+        {/* Dialogs and modals */}
+        <PubDetails 
+          pub={selectedPub}
+          isOpen={showPubDetails}
+          onClose={() => setShowPubDetails(false)}
+          onShare={() => {
+            setShowPubDetails(false);
+            setShowShareDialog(true);
+          }}
+        />
+        
+        <SaveRouteDialog 
+          pubCrawl={pubCrawl}
+          isOpen={showSaveDialog}
+          onClose={() => setShowSaveDialog(false)}
+        />
+        
+        <SavedRoutes 
+          isOpen={showSavedRoutes}
+          onClose={() => setShowSavedRoutes(false)}
+          onLoadRoute={handleLoadSavedRoute}
+        />
+        
+        <ShareDialog 
+          pubCrawl={pubCrawl}
+          isOpen={showShareDialog}
+          onClose={() => setShowShareDialog(false)}
+        />
       </main>
     </div>
   );

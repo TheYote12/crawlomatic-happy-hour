@@ -11,6 +11,7 @@ interface PubListProps {
   totalDuration: number;
   activePubIndex: number;
   onPubClick: (index: number) => void;
+  onViewDetails?: (pub: Place) => void;
 }
 
 const PubList: React.FC<PubListProps> = ({
@@ -18,7 +19,8 @@ const PubList: React.FC<PubListProps> = ({
   totalDistance,
   totalDuration,
   activePubIndex,
-  onPubClick
+  onPubClick,
+  onViewDetails
 }) => {
   const formatDuration = (minutes: number): string => {
     if (minutes < 60) {
@@ -79,6 +81,7 @@ const PubList: React.FC<PubListProps> = ({
             index={index}
             isActive={index === activePubIndex}
             onClick={() => onPubClick(index)}
+            onViewDetails={() => onViewDetails?.(pub)}
           />
         ))}
       </div>
