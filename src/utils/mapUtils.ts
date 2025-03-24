@@ -1,4 +1,3 @@
-
 import { Coordinates } from "./locationUtils";
 import { toast } from "sonner";
 import { GoogleMapsApiKeyManager } from './googleMapsApiKeyManager';
@@ -18,8 +17,14 @@ export interface Place {
   };
   opening_hours?: {
     open_now?: boolean;
+    weekday_text?: string[];
   };
   price_level?: number;
+  formatted_phone_number?: string;
+  website?: string;
+  formatted_address?: string;
+  types?: string[];
+  user_ratings_total?: number;
 }
 
 export interface PubCrawl {
@@ -285,6 +290,84 @@ const calculateDirectDistance = (from: Coordinates, to: Coordinates): number => 
 
 const toRadians = (degrees: number): number => {
   return degrees * (Math.PI / 180);
+};
+
+/**
+ * Gets detailed place information
+ */
+export const getPlaceDetails = async (
+  placeId: string,
+  map: google.maps.Map
+): Promise<Place | null> => {
+  try {
+    console.log("Fetching details for place ID:", placeId);
+    
+    const apiKey = GoogleMapsApiKeyManager.getApiKey();
+    if (!apiKey) {
+      throw new Error("Google Maps API key is not set");
+    }
+
+    if (!window.google || !window.google.maps || !window.google.maps.places) {
+      console.error("Places API library is not loaded correctly");
+      throw new Error("Places API is not available");
+    }
+    
+    return new Promise((resolve, reject) => {
+      const placesService = new google.maps.places.PlacesService(map);
+      
+      const request = {
+        placeId: placeId,
+        fields: [
+          'name', 'vicinity', 'rating', 'photos', 'geometry', 'opening_hours',
+          'price_level', 'formatted_phone_number', 'website', 'formatted_address',
+          'types', 'user_ratings_total'
+        ]
+      };
+      
+      placesService.getDetails(request, (place, status) => {
+        console.log("Place details API response status:", status);
+        
+        if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+          console.log("Place details:", place);
+          
+          const placeDetails: Place = {
+            id: place.place_id || placeId,
+            name: place.name || "Unnamed Pub",
+            vicinity: place.vicinity || place.formatted_address || "",
+            rating: place.rating,
+            photos: place.photos?.map(photo => ({ 
+              photo_reference: photo.getUrl?.() || "" 
+            })),
+            geometry: {
+              location: {
+                lat: place.geometry?.location?.lat() || 0,
+                lng: place.geometry?.location?.lng() || 0
+              }
+            },
+            opening_hours: {
+              open_now: place.opening_hours?.isOpen?.() || undefined,
+              weekday_text: place.opening_hours?.weekday_text
+            },
+            price_level: place.price_level,
+            formatted_phone_number: place.formatted_phone_number,
+            website: place.website,
+            formatted_address: place.formatted_address,
+            types: place.types,
+            user_ratings_total: place.user_ratings_total
+          };
+          
+          resolve(placeDetails);
+        } else {
+          console.error("Place details API error:", status);
+          reject(new Error(`Place details API error: ${status}`));
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error fetching place details:', error);
+    toast.error(error instanceof Error ? error.message : 'Failed to fetch place details');
+    return null;
+  }
 };
 
 /**

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { toast } from "sonner";
 import Header from '@/components/Header';
@@ -7,8 +8,13 @@ import CrawlOptions, { CrawlOptionsData } from '@/components/CrawlOptions';
 import PubList from '@/components/PubList';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { getCurrentLocation, Coordinates } from '@/utils/locationUtils';
-import { Place, PubCrawl, searchNearbyPubs, createPubCrawlRoute } from '@/utils/mapUtils';
-import { ArrowDown, BookmarkPlus, Share2, RotateCcw } from 'lucide-react';
+import { 
+  Place, 
+  PubCrawl, 
+  searchNearbyPubs, 
+  createPubCrawlRoute
+} from '@/utils/mapUtils';
+import { ArrowDown, BookmarkPlus, Share2 } from 'lucide-react';
 import GoogleMapsApiKeyInput from '@/components/GoogleMapsApiKeyInput';
 import { GoogleMapsApiKeyManager } from '@/utils/googleMapsApiKeyManager';
 import PubDetails from '@/components/PubDetails';
