@@ -15,16 +15,19 @@ export class GoogleMapsApiKeyManager {
     const savedKey = localStorage.getItem(STORAGE_KEY);
     
     if (savedKey && savedKey.trim() !== '') {
+      console.log("Using saved Google Maps API key");
       return savedKey;
     }
     
     // If no key is saved, use the default token and save it
     if (DEFAULT_TOKEN && DEFAULT_TOKEN.trim() !== '') {
+      console.log("Using default Google Maps API key");
       localStorage.setItem(STORAGE_KEY, DEFAULT_TOKEN);
       return DEFAULT_TOKEN;
     }
     
     // If no key is available, return empty string
+    console.warn("No Google Maps API key available");
     return '';
   }
   
@@ -37,7 +40,9 @@ export class GoogleMapsApiKeyManager {
       return;
     }
     
+    // Save the key
     localStorage.setItem(STORAGE_KEY, apiKey);
+    console.log("Google Maps API key updated");
     toast.success('Google Maps API key saved successfully');
     
     // Reload the page to apply the new key
@@ -50,6 +55,7 @@ export class GoogleMapsApiKeyManager {
   static resetToDefault(): void {
     if (DEFAULT_TOKEN && DEFAULT_TOKEN.trim() !== '') {
       localStorage.setItem(STORAGE_KEY, DEFAULT_TOKEN);
+      console.log("Reset to default Google Maps API key");
       toast.success('Reset to default Google Maps API key');
       
       // Reload the page to apply the new key

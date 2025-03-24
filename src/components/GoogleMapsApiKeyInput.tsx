@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoogleMapsApiKeyManager } from '../utils/googleMapsApiKeyManager';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -10,10 +10,18 @@ const GoogleMapsApiKeyInput: React.FC = () => {
   const [apiKey, setApiKey] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Load current API key when component mounts
+  useEffect(() => {
+    const currentKey = GoogleMapsApiKeyManager.getApiKey();
+    if (currentKey) {
+      setApiKey(currentKey);
+    }
+  }, [isOpen]); // Reload the key when the form opens
+
   const handleSave = () => {
     setIsSaving(true);
     try {
-      GoogleMapsApiKeyManager.setApiKey(apiKey);
+      GoogleMapsApiKeyManager.setApiKey(apiKey.trim());
       setIsOpen(false);
     } catch (error) {
       console.error('Error saving API key:', error);
