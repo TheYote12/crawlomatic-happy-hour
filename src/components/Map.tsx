@@ -1,15 +1,16 @@
 
 import React, { useEffect, useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { Coordinates } from '../utils/locationUtils';
-import { createMarker } from '../utils/mapUtils';
 import LoadingSpinner from './LoadingSpinner';
 
 interface MapProps {
   location: Coordinates;
-  route: google.maps.DirectionsResult | null;
+  route: any | null;
   pubCoordinates: Array<{ lat: number; lng: number; name: string }>;
   activePubIndex: number;
-  onMapLoad?: (map: google.maps.Map) => void;
+  onMapLoad?: (map: mapboxgl.Map) => void;
 }
 
 const Map: React.FC<MapProps> = ({
@@ -20,124 +21,94 @@ const Map: React.FC<MapProps> = ({
   onMapLoad
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [directionsRenderer, setDirectionsRenderer] = useState<google.maps.DirectionsRenderer | null>(null);
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const markers = useRef<mapboxgl.Marker[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize Google Maps
+  // Initialize Mapbox
   useEffect(() => {
-    if (!window.google || !mapRef.current) return;
+    if (!mapRef.current) return;
 
-    const newMap = new google.maps.Map(mapRef.current, {
-      center: { lat: location.latitude, lng: location.longitude },
+    // Initialize map
+    mapboxgl.accessToken = 'YOUR_MAPBOX_PUBLIC_TOKEN';
+    
+    map.current = new mapboxgl.Map({
+      container: mapRef.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [location.longitude, location.latitude],
       zoom: 15,
-      mapId: 'DEMO_MAP_ID', // You would use your own map ID here
-      disableDefaultUI: true,
-      zoomControl: true,
-      fullscreenControl: true,
-      gestureHandling: 'greedy',
-      styles: [
-        {
-          featureType: "all",
-          elementType: "geometry",
-          stylers: [{ visibility: "simplified" }]
-        },
-        {
-          featureType: "poi",
-          elementType: "labels.icon",
-          stylers: [{ visibility: "off" }]
-        }
-      ]
     });
 
-    // Create the directions renderer
-    const newDirectionsRenderer = new google.maps.DirectionsRenderer({
-      map: newMap,
-      suppressMarkers: true,
-      polylineOptions: {
-        strokeColor: '#3b82f6',
-        strokeWeight: 5,
-        strokeOpacity: 0.7
-      }
-    });
+    // Add navigation controls
+    map.current.addControl(
+      new mapboxgl.NavigationControl(),
+      'top-right'
+    );
 
-    setMap(newMap);
-    setDirectionsRenderer(newDirectionsRenderer);
-    
-    if (onMapLoad) onMapLoad(newMap);
-    
     // Add user location marker
-    const userMarker = new google.maps.Marker({
-      position: new google.maps.LatLng(location.latitude, location.longitude),
-      map: newMap,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        fillColor: '#3b82f6',
-        fillOpacity: 1,
-        strokeColor: '#ffffff',
-        strokeWeight: 2,
-        scale: 8
-      },
-      title: 'Your Location'
-    });
+    const userMarker = new mapboxgl.Marker({
+      color: '#3b82f6'
+    })
+      .setLngLat([location.longitude, location.latitude])
+      .addTo(map.current);
+
+    if (onMapLoad && map.current) {
+      onMapLoad(map.current);
+    }
 
     setIsLoading(false);
 
     return () => {
-      if (directionsRenderer) directionsRenderer.setMap(null);
-      markers.forEach(marker => marker.setMap(null));
-      userMarker.setMap(null);
+      markers.current.forEach(marker => marker.remove());
+      userMarker.remove();
+      map.current?.remove();
     };
   }, [location]);
 
-  // Update directions when route changes
-  useEffect(() => {
-    if (!map || !directionsRenderer || !route) return;
-    
-    directionsRenderer.setDirections(route);
-    
-  }, [map, directionsRenderer, route]);
-
   // Update markers when pub coordinates change
   useEffect(() => {
-    if (!map) return;
+    if (!map.current) return;
     
     // Clear existing markers
-    markers.forEach(marker => marker.setMap(null));
+    markers.current.forEach(marker => marker.remove());
+    markers.current = [];
     
     // Create new markers
-    const newMarkers = pubCoordinates.map((pub, index) => {
-      return createMarker(
-        map,
-        new google.maps.LatLng(pub.lat, pub.lng),
-        (index + 1).toString(),
-        pub.name
-      );
+    markers.current = pubCoordinates.map((pub, index) => {
+      const el = document.createElement('div');
+      el.className = 'marker';
+      el.style.backgroundColor = 'white';
+      el.style.width = '24px';
+      el.style.height = '24px';
+      el.style.borderRadius = '50%';
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      el.style.justifyContent = 'center';
+      el.style.border = '2px solid #3b82f6';
+      el.innerText = (index + 1).toString();
+      
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat([pub.lng, pub.lat])
+        .setPopup(new mapboxgl.Popup().setHTML(`<h3>${pub.name}</h3>`))
+        .addTo(map.current!);
+        
+      return marker;
     });
-    
-    setMarkers(newMarkers);
-    
-    return () => {
-      newMarkers.forEach(marker => marker.setMap(null));
-    };
-  }, [map, pubCoordinates]);
+  }, [map.current, pubCoordinates]);
 
   // Pan to active pub when activePubIndex changes
   useEffect(() => {
-    if (!map || activePubIndex < 0 || activePubIndex >= pubCoordinates.length) return;
+    if (!map.current || activePubIndex < 0 || activePubIndex >= pubCoordinates.length) return;
     
     const activePub = pubCoordinates[activePubIndex];
-    map.panTo(new google.maps.LatLng(activePub.lat, activePub.lng));
-    
-    // Highlight the marker
-    markers.forEach((marker, index) => {
-      if (index === activePubIndex) {
-        marker.setAnimation(google.maps.Animation.BOUNCE);
-        setTimeout(() => marker.setAnimation(null), 750);
-      }
+    map.current.easeTo({
+      center: [activePub.lng, activePub.lat],
+      zoom: 15
     });
-  }, [map, activePubIndex, pubCoordinates, markers]);
+    
+    // Show popup for active marker
+    markers.current[activePubIndex]?.togglePopup();
+  }, [map.current, activePubIndex, pubCoordinates]);
 
   return (
     <div className="relative h-full w-full rounded-2xl overflow-hidden shadow-lg">
@@ -153,3 +124,4 @@ const Map: React.FC<MapProps> = ({
 };
 
 export default Map;
+

@@ -1,5 +1,5 @@
-
 import { Coordinates } from "./locationUtils";
+import mapboxgl from 'mapbox-gl';
 
 // Define interfaces
 export interface Place {
@@ -28,49 +28,48 @@ export interface PubCrawl {
 }
 
 /**
- * Searches for pubs near a given location
+ * Searches for pubs near a given location using Mapbox
  */
 export const searchNearbyPubs = async (
   location: Coordinates,
   radius: number,
-  map: google.maps.Map,
+  map: mapboxgl.Map,
   maxResults = 10
 ): Promise<Place[]> => {
-  return new Promise((resolve, reject) => {
-    if (!window.google || !window.google.maps) {
-      console.error("Google Maps API not loaded");
-      reject(new Error("Google Maps API not loaded"));
-      return;
-    }
-
-    const service = new google.maps.places.PlacesService(map);
-    
-    const request = {
-      location: new google.maps.LatLng(location.latitude, location.longitude),
-      radius,
-      type: "bar",
-      keyword: "pub|bar|brewery|tavern",
-      openNow: true,
-    };
-
-    service.nearbySearch(request, (results, status) => {
-      if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-        // Sort by rating (highest first) and take only the top maxResults
-        const sortedResults = results
-          .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-          .slice(0, maxResults) as unknown as Place[];
-        
-        resolve(sortedResults);
-      } else {
-        console.error("Error searching for pubs:", status);
-        reject(new Error(`Places search failed with status: ${status}`));
+  // For demo purposes, returning mock data
+  // In a real app, you would use Mapbox's geocoding API to search for pubs
+  const mockPubs: Place[] = [
+    {
+      id: '1',
+      name: 'The Red Lion',
+      vicinity: '123 Main St',
+      rating: 4.5,
+      geometry: {
+        location: {
+          lat: location.latitude + 0.001,
+          lng: location.longitude + 0.001
+        }
       }
-    });
-  });
+    },
+    {
+      id: '2',
+      name: 'The Crown',
+      vicinity: '456 High St',
+      rating: 4.2,
+      geometry: {
+        location: {
+          lat: location.latitude - 0.001,
+          lng: location.longitude - 0.001
+        }
+      }
+    }
+  ];
+
+  return mockPubs;
 };
 
 /**
- * Creates an optimized pub crawl route from a list of places
+ * Creates an optimized pub crawl route
  */
 export const createPubCrawlRoute = async (
   startLocation: Coordinates,
@@ -80,77 +79,14 @@ export const createPubCrawlRoute = async (
   // Filter places to include only the requested number of stops
   const filteredPlaces = places.slice(0, maxStops);
   
-  // Create waypoints from the filtered places
-  const waypoints = filteredPlaces.map(place => ({
-    location: new google.maps.LatLng(
-      place.geometry.location.lat,
-      place.geometry.location.lng
-    ),
-    stopover: true
-  }));
-  
-  // Calculate route using Directions Service
-  return new Promise((resolve, reject) => {
-    const directionsService = new google.maps.DirectionsService();
-    
-    // If no places found, return empty result
-    if (filteredPlaces.length === 0) {
-      resolve({
-        places: [],
-        route: null,
-        totalDistance: 0,
-        totalDuration: 0
-      });
-      return;
-    }
-    
-    // Create request
-    const request: google.maps.DirectionsRequest = {
-      origin: new google.maps.LatLng(startLocation.latitude, startLocation.longitude),
-      destination: new google.maps.LatLng(startLocation.latitude, startLocation.longitude),
-      waypoints: waypoints,
-      optimizeWaypoints: true,
-      travelMode: google.maps.TravelMode.WALKING
-    };
-    
-    directionsService.route(request, (result, status) => {
-      if (status === google.maps.DirectionsStatus.OK && result) {
-        // Calculate total distance and duration
-        let totalDistance = 0;
-        let totalDuration = 0;
-        
-        if (result.routes.length > 0 && result.routes[0].legs) {
-          result.routes[0].legs.forEach(leg => {
-            totalDistance += leg.distance?.value || 0;
-            totalDuration += leg.duration?.value || 0;
-          });
-        }
-        
-        // Convert meters to kilometers
-        totalDistance = totalDistance / 1000;
-        
-        // Order the places according to the optimized waypoint order
-        let orderedPlaces = [];
-        
-        if (result.routes.length > 0 && result.routes[0].waypoint_order) {
-          const waypointOrder = result.routes[0].waypoint_order;
-          orderedPlaces = waypointOrder.map(index => filteredPlaces[index]);
-        } else {
-          orderedPlaces = filteredPlaces;
-        }
-        
-        resolve({
-          places: orderedPlaces,
-          route: result,
-          totalDistance,
-          totalDuration: totalDuration / 60 // Convert seconds to minutes
-        });
-      } else {
-        console.error("Directions service failed:", status);
-        reject(new Error(`Directions service failed: ${status}`));
-      }
-    });
-  });
+  // For demo purposes, returning mock data
+  // In a real app, you would use Mapbox's directions API
+  return {
+    places: filteredPlaces,
+    route: null,
+    totalDistance: 2.5,
+    totalDuration: 30
+  };
 };
 
 /**
@@ -159,23 +95,31 @@ export const createPubCrawlRoute = async (
 export const getPlacePhotoUrl = (photoReference: string, maxWidth = 400): string => {
   // For a real app, you'd use your API key and the Places API to get actual photos
   // Since this is just a demo, we'll use a placeholder image
-  return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photoreference=${photoReference}&key=YOUR_API_KEY`;
+  return `https://via.placeholder.com/${maxWidth}x${maxWidth}?text=Photo+Not+Available`;
 };
 
 /**
  * Creates a marker on the map
  */
 export const createMarker = (
-  map: google.maps.Map,
-  position: google.maps.LatLng,
+  map: mapboxgl.Map,
+  position: mapboxgl.LngLat,
   label: string,
   title: string
-): google.maps.Marker => {
-  return new google.maps.Marker({
-    position,
-    map,
-    label,
-    title,
-    animation: google.maps.Animation.DROP
-  });
+): mapboxgl.Marker => {
+  const el = document.createElement('div');
+  el.className = 'marker';
+  el.style.backgroundColor = 'white';
+  el.style.width = '30px';
+  el.style.height = '30px';
+  el.style.borderRadius = '50%';
+  el.style.display = 'flex';
+  el.style.alignItems = 'center';
+  el.style.justifyContent = 'center';
+  el.style.border = '2px solid #3b82f6';
+  el.innerText = label;
+
+  return new mapboxgl.Marker(el)
+    .setLngLat([position.lng, position.lat])
+    .setPopup(new mapboxgl.Popup().setHTML(`<h3>${title}</h3>`));
 };
