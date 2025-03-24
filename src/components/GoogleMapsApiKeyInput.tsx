@@ -43,7 +43,17 @@ const GoogleMapsApiKeyInput: React.FC = () => {
     window.checkPlacesCallback = () => {
       try {
         if (window.google && window.google.maps && window.google.maps.places) {
-          toast.success('Places API is correctly configured!');
+          // Try to create a PlacesService instance to verify API is working
+          const dummyDiv = document.createElement('div');
+          const service = new google.maps.places.PlacesService(dummyDiv);
+          
+          if (service) {
+            toast.success('Places API is correctly configured!', {
+              description: 'Make sure you have also enabled billing in your Google Cloud Console for the API to work.'
+            });
+          } else {
+            toast.error('Places API loaded but service could not be created');
+          }
         } else {
           toast.error('Places API failed to load correctly');
         }
@@ -144,9 +154,18 @@ const GoogleMapsApiKeyInput: React.FC = () => {
           </p>
           
           <p className="text-xs text-muted-foreground">
-            <strong>Note:</strong> You must enable the Places API in your Google Cloud Console 
+            <strong>Note:</strong> You must enable the Places API and set up billing in your Google Cloud Console 
             for this application to work correctly.
           </p>
+          
+          <a 
+            href="https://console.cloud.google.com/apis/library/places-backend.googleapis.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-xs text-primary inline-block mt-1 hover:underline"
+          >
+            Enable Places API →
+          </a>
         </div>
       )}
     </div>

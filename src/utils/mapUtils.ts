@@ -1,4 +1,3 @@
-
 import { Coordinates } from "./locationUtils";
 import { toast } from "sonner";
 import { GoogleMapsApiKeyManager } from './googleMapsApiKeyManager';
@@ -103,23 +102,22 @@ export const searchNearbyPubs = async (
           // More detailed error information based on status
           let errorMessage = `Places API error: ${status}.`;
           
-          if (status === "REQUEST_DENIED" || status === google.maps.places.PlacesServiceStatus.REQUEST_DENIED) {
+          if (status === google.maps.places.PlacesServiceStatus.REQUEST_DENIED) {
             errorMessage += " Your API key may not have the Places API enabled.";
-          } else if (status === "UNKNOWN_ERROR" || status === google.maps.places.PlacesServiceStatus.UNKNOWN_ERROR) {
+          } else if (status === google.maps.places.PlacesServiceStatus.UNKNOWN_ERROR) {
             errorMessage += " This could be a temporary server error.";
-          } else if (status === "INVALID_REQUEST" || status === google.maps.places.PlacesServiceStatus.INVALID_REQUEST) {
+          } else if (status === google.maps.places.PlacesServiceStatus.INVALID_REQUEST) {
             errorMessage += " The request was invalid.";
-          } else if (status === "OVER_QUERY_LIMIT" || status === google.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT) {
+          } else if (status === google.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT) {
             errorMessage += " You have exceeded your daily request quota.";
-          } else if (status === "NOT_FOUND" || status === google.maps.places.PlacesServiceStatus.NOT_FOUND) {
+          } else if (status === google.maps.places.PlacesServiceStatus.NOT_FOUND) {
             errorMessage += " The place was not found.";
-          } else if (status === "ZERO_RESULTS" || status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+          } else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
             errorMessage += " No pubs were found within the specified radius.";
           }
           
           // Add guidance for API activation
-          if (status === "REQUEST_DENIED" || status === "UNKNOWN_ERROR" || 
-              status === google.maps.places.PlacesServiceStatus.REQUEST_DENIED || 
+          if (status === google.maps.places.PlacesServiceStatus.REQUEST_DENIED || 
               status === google.maps.places.PlacesServiceStatus.UNKNOWN_ERROR) {
             errorMessage += " You need to enable the Places API in your Google Cloud Console: https://console.cloud.google.com/apis/library/places-backend.googleapis.com";
           }
