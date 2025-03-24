@@ -20,6 +20,9 @@ const containerStyle = {
   borderRadius: '1rem'
 };
 
+// Define libraries as a constant to prevent reloading
+const libraries = ['places'];
+
 const Map: React.FC<MapProps> = ({
   location,
   route,
@@ -35,7 +38,7 @@ const Map: React.FC<MapProps> = ({
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GoogleMapsApiKeyManager.getApiKey(),
-    libraries: ['places']
+    libraries: libraries as any
   });
 
   // Handle map load
