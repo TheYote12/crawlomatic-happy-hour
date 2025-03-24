@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, DirectionsRenderer } from '@react-google-maps/api';
 import { Coordinates } from '../utils/locationUtils';
@@ -40,6 +39,19 @@ const Map: React.FC<MapProps> = ({
     googleMapsApiKey: GoogleMapsApiKeyManager.getApiKey(),
     libraries: libraries as any
   });
+
+  // Handle API loading error
+  useEffect(() => {
+    if (loadError) {
+      console.error("Error loading Google Maps:", loadError);
+      setIsMapError(true);
+      
+      // Check if the error might be due to missing Places API
+      if (loadError.message && loadError.message.includes('ApiNotActivatedMapError')) {
+        toast.error('Places API not enabled. Please enable it in your Google Cloud Console.');
+      }
+    }
+  }, [loadError]);
 
   // Handle map load
   const handleOnLoad = useCallback((map: google.maps.Map) => {
@@ -131,7 +143,6 @@ const Map: React.FC<MapProps> = ({
 
   // Display loading or error states
   if (loadError) {
-    console.error("Error loading Google Maps:", loadError);
     return (
       <div className="relative h-full w-full rounded-2xl overflow-hidden shadow-lg">
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/90 p-6">
@@ -144,7 +155,7 @@ const Map: React.FC<MapProps> = ({
           </div>
           <h3 className="text-lg font-semibold">Failed to load map</h3>
           <p className="text-sm text-muted-foreground text-center mt-2">
-            There was a problem loading Google Maps. Please check your internet connection and API key.
+            There was a problem loading Google Maps. Please check your API key and make sure the Places API is enabled in your Google Cloud Console.
           </p>
         </div>
       </div>

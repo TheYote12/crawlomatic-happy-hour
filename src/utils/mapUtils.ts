@@ -45,104 +45,63 @@ export const searchNearbyPubs = async (
       throw new Error("Google Maps API key is not set");
     }
     
-    // Using Google Places API to search for pubs near location
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?` +
-      `location=${location.latitude},${location.longitude}&radius=${radius}` +
-      `&type=bar&keyword=pub|bar|tavern&key=${apiKey}`, 
-      { mode: 'cors' }
-    );
+    // Skip direct fetch approach since it has CORS issues
+    // Go straight to using the client-side Google Maps Places library
     
-    // If CORS issues occur with direct fetch, we can use a proxy service or
-    // implement through a serverless function
-    
-    // For CORS issues, use this client-side workaround with callback
-    const proxyUrl = `https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?` +
-      `location=${location.latitude},${location.longitude}&radius=${radius}` +
-      `&type=bar&keyword=pub|bar|tavern&key=${apiKey}`;
-    
-    const proxyResponse = await fetch(proxyUrl);
-    
-    if (!proxyResponse.ok) {
-      throw new Error(`Google Places API error: ${proxyResponse.status}`);
-    }
-    
-    const data = await proxyResponse.json();
-    console.log("Google Places API response:", data);
-    
-    // Transform to our Place interface (matches Places API format already)
-    const places: Place[] = data.results.slice(0, maxResults).map((place: any) => {
-      return {
-        id: place.place_id,
-        name: place.name,
-        vicinity: place.vicinity,
-        rating: place.rating,
-        photos: place.photos,
-        geometry: place.geometry,
-        opening_hours: place.opening_hours,
-        price_level: place.price_level
-      };
-    });
-    
-    console.log("Found pubs:", places.length);
-    return places;
-  } catch (error) {
-    console.error('Error searching for pubs:', error);
-    
-    // Alternative implementation using the client-side Google Maps Places library
-    // This is a fallback in case the direct API call doesn't work due to CORS
-    try {
-      console.log("Trying alternative Places library method");
+    return new Promise((resolve, reject) => {
+      if (!window.google || !window.google.maps || !window.google.maps.places) {
+        reject(new Error("Google Maps Places library not loaded"));
+        return;
+      }
       
-      return new Promise((resolve, reject) => {
-        if (!window.google || !window.google.maps || !window.google.maps.places) {
-          reject(new Error("Google Maps Places library not loaded"));
-          return;
-        }
-        
-        const placesService = new google.maps.places.PlacesService(map);
-        const request = {
-          location: new google.maps.LatLng(location.latitude, location.longitude),
-          radius,
-          type: 'bar', // Fix: Changed from string[] to string
-          keyword: 'pub'
-        };
-        
-        placesService.nearbySearch(request, (results, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-            console.log("Places API results:", results);
-            
-            const places: Place[] = results.slice(0, maxResults).map(place => ({
-              id: place.place_id || Math.random().toString(36).substring(2, 9),
-              name: place.name || "Unnamed Pub",
-              vicinity: place.vicinity || "",
-              rating: place.rating,
-              photos: place.photos?.map(photo => ({ 
-                photo_reference: photo.getUrl?.() || "" 
-              })),
-              geometry: {
-                location: {
-                  lat: place.geometry?.location?.lat() || location.latitude,
-                  lng: place.geometry?.location?.lng() || location.longitude
-                }
-              },
-              opening_hours: {
-                open_now: place.opening_hours?.isOpen?.() || undefined
-              },
-              price_level: place.price_level
-            }));
-            
-            resolve(places);
+      const placesService = new google.maps.places.PlacesService(map);
+      const request = {
+        location: new google.maps.LatLng(location.latitude, location.longitude),
+        radius,
+        type: 'bar',
+        keyword: 'pub'
+      };
+      
+      placesService.nearbySearch(request, (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+          console.log("Places API results:", results);
+          
+          const places: Place[] = results.slice(0, maxResults).map(place => ({
+            id: place.place_id || Math.random().toString(36).substring(2, 9),
+            name: place.name || "Unnamed Pub",
+            vicinity: place.vicinity || "",
+            rating: place.rating,
+            photos: place.photos?.map(photo => ({ 
+              photo_reference: photo.getUrl?.() || "" 
+            })),
+            geometry: {
+              location: {
+                lat: place.geometry?.location?.lat() || location.latitude,
+                lng: place.geometry?.location?.lng() || location.longitude
+              }
+            },
+            opening_hours: {
+              open_now: place.opening_hours?.isOpen?.() || undefined
+            },
+            price_level: place.price_level
+          }));
+          
+          resolve(places);
+        } else {
+          // If API is not activated, provide a helpful error message
+          if (status === "REQUEST_DENIED" || status === "UNKNOWN_ERROR") {
+            console.error(`Google Places API error: ${status}`);
+            reject(new Error(`Places API error: ${status}. You need to enable the Places API in your Google Cloud Console.`));
           } else {
             reject(new Error(`Google Places API error: ${status}`));
           }
-        });
+        }
       });
-    } catch (fallbackError) {
-      console.error('Error with Places library fallback:', fallbackError);
-      toast.error('Failed to search for pubs');
-      throw new Error('Failed to search for pubs');
-    }
+    });
+  } catch (error) {
+    console.error('Error searching for pubs:', error);
+    toast.error('Failed to search for pubs. Make sure the Places API is enabled in your Google Cloud Console.');
+    throw error;
   }
 };
 

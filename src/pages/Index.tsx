@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { toast } from "sonner";
 import Header from '@/components/Header';
@@ -116,7 +115,14 @@ const Index = () => {
       toast.success(`Found ${newPubCrawl.places.length} great pubs for your crawl!`);
     } catch (error) {
       console.error('Error generating pub crawl:', error);
-      toast.error('Failed to generate pub crawl. Please try again.');
+      
+      // Check if the error mentions Places API
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Places API')) {
+        toast.error('Places API not enabled. Please go to Google Cloud Console, select your project, navigate to "APIs & Services" > "Library", search for "Places API", and click "Enable".');
+      } else {
+        toast.error('Failed to generate pub crawl. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
