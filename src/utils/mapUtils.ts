@@ -1,3 +1,4 @@
+
 import { Coordinates } from "./locationUtils";
 import { toast } from "sonner";
 import { GoogleMapsApiKeyManager } from './googleMapsApiKeyManager';
@@ -211,6 +212,14 @@ export const createPubCrawlRoute = async (
           });
         } else {
           console.error("Directions service failed:", status);
+          
+          if (status === google.maps.DirectionsStatus.REQUEST_DENIED) {
+            // Display toast warning about the Directions API
+            toast.warning("Directions API not enabled", {
+              description: "Route mapping requires the Directions API. Enable it in Google Cloud Console.",
+              duration: 8000,
+            });
+          }
           
           // Fallback to direct distance calculation if no routes
           const totalDistance = calculateTotalDirectDistance(

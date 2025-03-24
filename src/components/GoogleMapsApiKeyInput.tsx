@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Settings, Key, RotateCcw, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 
 const GoogleMapsApiKeyInput: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -160,13 +161,21 @@ const GoogleMapsApiKeyInput: React.FC = () => {
             {isChecking ? 'Checking...' : 'Check Places API'}
           </Button>
           
+          <Alert variant="default" className="mt-4 bg-muted/50">
+            <AlertTitle className="text-xs font-semibold">Required APIs</AlertTitle>
+            <AlertDescription className="text-xs space-y-1 mt-1">
+              <p>Make sure to enable these APIs in Google Cloud Console:</p>
+              <ul className="list-disc pl-4 space-y-0.5">
+                <li>Places API</li>
+                <li>Places Autocomplete API</li>
+                <li>Directions API</li>
+              </ul>
+              <p className="mt-1">You must also set up billing for these APIs to work.</p>
+            </AlertDescription>
+          </Alert>
+          
           <p className="text-xs text-muted-foreground mt-2">
             Your API key is stored locally and is never sent to our servers.
-          </p>
-          
-          <p className="text-xs text-muted-foreground">
-            <strong>Note:</strong> You must enable the Places API and set up billing in your Google Cloud Console 
-            for this application to work correctly.
           </p>
           
           <a 
@@ -176,6 +185,15 @@ const GoogleMapsApiKeyInput: React.FC = () => {
             className="text-xs text-primary inline-block mt-1 hover:underline"
           >
             Enable Places API →
+          </a>
+          
+          <a 
+            href="https://console.cloud.google.com/apis/library/directions-backend.googleapis.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-xs text-primary inline-block mt-1 ml-2 hover:underline"
+          >
+            Enable Directions API →
           </a>
         </div>
       )}
