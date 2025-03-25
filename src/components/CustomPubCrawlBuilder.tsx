@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -185,7 +184,7 @@ const CustomPubCrawlBuilder: React.FC<CustomPubCrawlBuilderProps> = ({
               onClick={handleSearch}
               disabled={isSearching}
             >
-              {isSearching ? <LoadingSpinner size="sm" /> : <Search className="h-4 w-4" />}
+              {isSearching ? <LoadingSpinner size="small" /> : <Search className="h-4 w-4" />}
             </Button>
           </div>
           
@@ -293,7 +292,7 @@ const CustomPubCrawlBuilder: React.FC<CustomPubCrawlBuilderProps> = ({
               disabled={selectedPubs.length < 2 || isCreatingRoute} 
               onClick={handleCreateRoute}
             >
-              {isCreatingRoute ? <LoadingSpinner size="sm" /> : 'Create Pub Crawl'}
+              {isCreatingRoute ? <LoadingSpinner size="small" /> : 'Create Pub Crawl'}
             </Button>
           </div>
         </div>

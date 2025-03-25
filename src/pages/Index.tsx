@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { toast } from "sonner";
 import Header from '@/components/Header';
@@ -13,7 +14,7 @@ import {
   createPubCrawlRoute,
   createCustomPubCrawlRoute
 } from '@/utils/mapUtils';
-import { ChevronDown, BookmarkPlus, MapPin } from 'lucide-react';
+import { ChevronDown, BookmarkPlus, MapPin, PlusCircle } from 'lucide-react';
 import GoogleMapsApiKeyInput from '@/components/GoogleMapsApiKeyInput';
 import { GoogleMapsApiKeyManager } from '@/utils/googleMapsApiKeyManager';
 import PubDetails from '@/components/PubDetails';
