@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { toast } from "sonner";
 import Header from '@/components/Header';
@@ -12,7 +11,8 @@ import {
   Place, 
   PubCrawl, 
   searchNearbyPubs, 
-  createPubCrawlRoute
+  createPubCrawlRoute,
+  createCustomPubCrawlRoute
 } from '@/utils/mapUtils';
 import { ChevronDown, BookmarkPlus, ArrowDownToLine, PlusCircle, MapPin } from 'lucide-react';
 import GoogleMapsApiKeyInput from '@/components/GoogleMapsApiKeyInput';
@@ -306,7 +306,10 @@ const Index = () => {
             
             {location && (
               <CommunityRoutes
-                userLocation={location}
+                userLocation={{
+                  lat: location.lat,
+                  lng: location.lng
+                }}
                 onSelectRoute={handleLoadSavedRoute}
               />
             )}
