@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Place, getPlaceDetails, getPlacePhotoUrl } from '../utils/mapUtils';
+import { Place, getPlaceDetails } from '../utils/mapUtils';
 import { 
   Star, Clock, MapPin, DollarSign, Phone, Globe, 
   Users, Camera, X, Share2, Loader2
