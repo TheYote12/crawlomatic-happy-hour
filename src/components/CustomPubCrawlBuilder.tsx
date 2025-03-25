@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -133,14 +132,8 @@ const CustomPubCrawlBuilder: React.FC<CustomPubCrawlBuilderProps> = ({
     
     try {
       // Create a custom crawl route
-      // Convert Coordinates to the format expected by createCustomPubCrawlRoute
-      const locationForMap = {
-        latitude: location.latitude,
-        longitude: location.longitude
-      };
-      
       const customCrawl = await createCustomPubCrawlRoute(
-        locationForMap, 
+        location, 
         selectedPubs
       );
       
