@@ -5,35 +5,35 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%; /* Apple white background */
-    --foreground: 0 0% 0%;
+    --background: 210 50% 98%; /* Light blue-tinted background */
+    --foreground: 222 47% 11%;
 
-    --card: 0 0% 98%; /* Very light gray for cards */
-    --card-foreground: 0 0% 3%;
+    --card: 0 0% 100%; 
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 211 100% 50%; /* Apple blue */
-    --primary-foreground: 0 0% 100%;
+    --primary: 221 83% 53%; /* Modern blue */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 0 0% 96%; /* Light gray for secondary elements */
-    --secondary-foreground: 0 0% 9%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 211 100% 50%; /* Apple blue accent */
-    --accent-foreground: 0 0% 100%;
+    --accent: 221 83% 53%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 100% 50%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 211 100% 50%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
 
-    --radius: 0.5rem; /* Apple uses rounded corners */
+    --radius: 1rem; /* Rounder corners */
   }
 }
 
@@ -42,30 +42,39 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
-    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    @apply bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-foreground min-h-screen;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
 }
 
 @layer components {
+  /* Glassmorphism components */
   .glass {
-    @apply backdrop-blur-md bg-white/90 border border-gray-200/30;
+    @apply backdrop-blur-lg bg-white/70 border border-white/20 shadow-sm;
   }
 
+  .glass-darker {
+    @apply backdrop-blur-lg bg-white/80 border border-white/30 shadow-md;
+  }
+  
+  .glass-card {
+    @apply glass rounded-2xl transition-all duration-300;
+  }
+  
+  .glass-button {
+    @apply glass backdrop-blur-md bg-primary/90 text-white border-primary/20 hover:bg-primary/80 transition-all;
+  }
+  
+  .glass-input {
+    @apply glass bg-white/50 border-white/30 focus:border-primary/30 focus:ring-primary/20;
+  }
+  
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-md hover:scale-[1.02] hover:z-10;
+    @apply transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:-translate-y-1 hover:z-10;
   }
   
-  .apple-card {
-    @apply bg-white border border-gray-200/50 rounded-xl shadow-sm hover:shadow-md transition-all duration-300;
-  }
-  
-  .apple-button {
-    @apply bg-primary text-white hover:bg-primary/90 transition-all;
-  }
-  
-  .apple-gradient {
-    @apply bg-gradient-to-b from-white via-white to-gray-100;
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent;
   }
 }
 
@@ -74,7 +83,7 @@
 }
 
 .mapboxgl-popup-content {
-  @apply rounded-xl shadow-lg p-3 border border-gray-200/30 bg-white text-gray-800;
+  @apply glass rounded-xl shadow-lg p-3 border border-white/30 bg-white/80 text-gray-800;
 }
 
 .mapboxgl-popup-close-button {
@@ -82,27 +91,12 @@
 }
 
 .mapboxgl-ctrl-group {
-  @apply !rounded-xl !shadow-md !border !border-gray-200/30 !bg-white;
+  @apply !glass !rounded-xl !shadow-md !border !border-white/30;
 }
 
 .mapboxgl-ctrl-group button {
   @apply !text-gray-400 hover:!bg-gray-100/50 transition-colors;
 }
 
-/* Add SF Pro Display font */
-@font-face {
-  font-family: 'SF Pro Display';
-  src: url('https://fonts.cdnfonts.com/css/sf-pro-display') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'SF Pro Display';
-  src: url('https://fonts.cdnfonts.com/css/sf-pro-display') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-
+/* Add Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');

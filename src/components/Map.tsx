@@ -163,7 +163,7 @@ const Map: React.FC<MapProps> = ({
   if (loadError) {
     return (
       <div className="relative h-full w-full rounded-2xl overflow-hidden shadow-lg">
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/90 p-6">
+        <div className="absolute inset-0 flex flex-col items-center justify-center glass p-6">
           <div className="text-destructive mb-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-2">
               <circle cx="12" cy="12" r="10"></circle>
@@ -183,7 +183,7 @@ const Map: React.FC<MapProps> = ({
   if (!isLoaded) {
     return (
       <div className="relative h-full w-full rounded-2xl overflow-hidden shadow-lg">
-        <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-xs">
+        <div className="absolute inset-0 flex items-center justify-center glass">
           <LoadingSpinner size="large" />
         </div>
       </div>
@@ -201,7 +201,69 @@ const Map: React.FC<MapProps> = ({
         options={{
           streetViewControl: false,
           mapTypeControl: false,
-          fullscreenControl: false
+          fullscreenControl: false,
+          styles: [
+            {
+              "featureType": "all",
+              "elementType": "geometry.fill",
+              "stylers": [{"weight": "2.00"}]
+            },
+            {
+              "featureType": "all",
+              "elementType": "geometry.stroke",
+              "stylers": [{"color": "#9c9c9c"}]
+            },
+            {
+              "featureType": "all",
+              "elementType": "labels.text",
+              "stylers": [{"visibility": "on"}]
+            },
+            {
+              "featureType": "landscape",
+              "elementType": "all",
+              "stylers": [{"color": "#f2f2f2"}]
+            },
+            {
+              "featureType": "landscape",
+              "elementType": "geometry.fill",
+              "stylers": [{"color": "#f9f9f9"}]
+            },
+            {
+              "featureType": "poi",
+              "elementType": "all",
+              "stylers": [{"visibility": "off"}]
+            },
+            {
+              "featureType": "road",
+              "elementType": "all",
+              "stylers": [{"saturation": -100}, {"lightness": 45}]
+            },
+            {
+              "featureType": "road",
+              "elementType": "geometry.fill",
+              "stylers": [{"color": "#eeeeee"}]
+            },
+            {
+              "featureType": "road",
+              "elementType": "labels.text.fill",
+              "stylers": [{"color": "#7b7b7b"}]
+            },
+            {
+              "featureType": "road",
+              "elementType": "labels.text.stroke",
+              "stylers": [{"color": "#ffffff"}]
+            },
+            {
+              "featureType": "road.highway",
+              "elementType": "all",
+              "stylers": [{"visibility": "simplified"}]
+            },
+            {
+              "featureType": "water",
+              "elementType": "all",
+              "stylers": [{"color": "#c9e9f6"}, {"visibility": "on"}]
+            }
+          ]
         }}
       >
         {/* Render route if available */}
@@ -221,7 +283,7 @@ const Map: React.FC<MapProps> = ({
       </GoogleMap>
       
       {isMapError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/90 p-6">
+        <div className="absolute inset-0 flex flex-col items-center justify-center glass p-6">
           <div className="text-destructive mb-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-2">
               <circle cx="12" cy="12" r="10"></circle>
@@ -237,7 +299,7 @@ const Map: React.FC<MapProps> = ({
       )}
 
       {isDirectionsError && !isMapError && pubCoordinates.length > 0 && (
-        <div className="absolute bottom-4 left-4 right-4 glass p-4 rounded-lg shadow-lg">
+        <div className="absolute bottom-4 left-4 right-4 glass p-4 rounded-xl shadow-lg">
           <h3 className="text-md font-semibold mb-2 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-amber-500">
               <circle cx="12" cy="12" r="10"></circle>
@@ -250,7 +312,7 @@ const Map: React.FC<MapProps> = ({
             For route mapping to work, you need to enable the Directions API in your Google Cloud Console.
           </p>
           <Button 
-            variant="secondary" 
+            variant="outline" 
             className="w-full" 
             onClick={openDirectionsApiConsole}
           >

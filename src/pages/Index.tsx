@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { toast } from "sonner";
 import Header from '@/components/Header';
@@ -28,6 +29,7 @@ import CustomPubCrawlBuilder from '@/components/CustomPubCrawlBuilder';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
+  // Fix the ordering of useState declarations
   const [location, setLocation] = useState<Coordinates | null>(null);
   const [locationError, setLocationError] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +43,7 @@ const Index = () => {
   const [showSavedRoutes, setShowSavedRoutes] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showCustomBuilder, setShowCustomBuilder] = useState(false);
+  
   const mapRef = useRef<google.maps.Map | null>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -116,7 +119,15 @@ const Index = () => {
       // Search for pubs near the user's location
       console.log("Attempting to search for pubs...");
       try {
-        const pubs = await searchNearbyPubs(location, radiusInMeters, mapRef.current, options.stops * 2);
+        const pubs = await searchNearbyPubs(
+          { 
+            lat: location.latitude, 
+            lng: location.longitude 
+          }, 
+          radiusInMeters, 
+          mapRef.current, 
+          options.stops * 2
+        );
         
         if (pubs.length === 0) {
           toast.error('No pubs found nearby. Try increasing your search radius.');
@@ -125,7 +136,14 @@ const Index = () => {
         }
         
         // Create an optimized pub crawl route
-        const newPubCrawl = await createPubCrawlRoute(location, pubs, options.stops);
+        const newPubCrawl = await createPubCrawlRoute(
+          { 
+            lat: location.latitude, 
+            lng: location.longitude 
+          }, 
+          pubs, 
+          options.stops
+        );
         
         setPubCrawl(newPubCrawl);
         setActivePubIndex(0);
@@ -277,7 +295,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header isScrolled={isScrolled} />
       
       <main className="pt-16 pb-16 px-4 max-w-7xl mx-auto">
@@ -293,33 +311,37 @@ const Index = () => {
             <div className="flex justify-between items-center">
               <Button 
                 variant="outline" 
-                className="rounded-full px-5 py-2 border border-gray-200 text-gray-800 bg-white hover:bg-gray-50"
+                className="rounded-full px-5 py-2 flex items-center gap-2"
                 onClick={() => setShowCustomBuilder(true)}
               >
-                <PlusCircle className="h-4 w-4 mr-2 text-primary" />
-                Create Custom Crawl
+                <PlusCircle className="h-4 w-4 text-primary" />
+                <span>Create Custom Crawl</span>
               </Button>
               
               <Button 
                 variant="outline" 
-                className="rounded-full px-5 py-2 border border-gray-200 text-gray-800 bg-white hover:bg-gray-50"
+                className="rounded-full px-5 py-2 flex items-center gap-2"
                 onClick={() => setShowSavedRoutes(true)}
               >
-                <BookmarkPlus className="h-4 w-4 mr-2 text-primary" />
-                Saved Routes
+                <BookmarkPlus className="h-4 w-4 text-primary" />
+                <span>Saved Routes</span>
               </Button>
             </div>
             
             {location && (
               <CommunityRoutes
-                userLocation={location}
+                userLocation={{
+                  lat: location.latitude,
+                  lng: location.longitude,
+                  name: 'Current Location'
+                }}
                 onSelectRoute={handleLoadSavedRoute}
               />
             )}
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div 
-                className="h-[30vh] lg:h-[70vh] rounded-3xl overflow-hidden relative shadow-md"
+                className="h-[30vh] lg:h-[70vh] rounded-3xl overflow-hidden relative shadow-xl"
                 style={{ minHeight: '400px' }}
               >
                 <Map 
@@ -347,14 +369,14 @@ const Index = () => {
             {pubCrawl && pubCrawl.places.length > 0 && (
               <>
                 <div className="flex justify-center my-8">
-                  <div className="animate-bounce p-2 bg-white rounded-full shadow-md">
+                  <div className="animate-bounce p-2 glass rounded-full shadow-md">
                     <ChevronDown className="h-6 w-6 text-primary" />
                   </div>
                 </div>
                 
-                <div ref={resultsRef} className="bg-white rounded-3xl p-6 shadow-sm">
+                <div ref={resultsRef} className="glass-card p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-                    <h2 className="text-2xl sm:text-3xl font-medium text-gray-900">
+                    <h2 className="text-2xl sm:text-3xl font-medium gradient-text">
                       {pubCrawl.isCustom ? 'Your Custom Pub Crawl' : 'Your Pub Crawl'}
                     </h2>
                     
