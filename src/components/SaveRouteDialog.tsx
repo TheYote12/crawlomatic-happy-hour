@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
+import { Checkbox } from './ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -21,16 +22,19 @@ interface SaveRouteDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSaved?: () => void;
+  userLocation?: { lat: number; lng: number; name?: string };
 }
 
 const SaveRouteDialog: React.FC<SaveRouteDialogProps> = ({
   pubCrawl,
   isOpen,
   onClose,
-  onSaved
+  onSaved,
+  userLocation
 }) => {
   const [routeName, setRouteName] = useState('');
   const [description, setDescription] = useState('');
+  const [shareWithCommunity, setShareWithCommunity] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = () => {
@@ -42,18 +46,29 @@ const SaveRouteDialog: React.FC<SaveRouteDialogProps> = ({
       // Create a unique ID
       const id = `route_${Date.now()}`;
       
+      // Current timestamp for createdAt
+      const now = new Date().toISOString();
+      
       // Save the route
       SavedRoutesManager.saveRoute({
         id,
         name: routeName || `Pub Crawl - ${new Date().toLocaleDateString()}`,
         description,
-        date: new Date().toISOString(),
-        pubCrawl
+        date: now,
+        createdAt: now,
+        pubCrawl,
+        isShared: shareWithCommunity,
+        author: 'Anonymous', // In a real app, you'd use the user's name
+        location: userLocation
       });
       
-      toast.success('Route saved successfully!');
+      toast.success(shareWithCommunity 
+        ? 'Route saved and shared with the community!' 
+        : 'Route saved successfully!'
+      );
       setRouteName('');
       setDescription('');
+      setShareWithCommunity(false);
       onSaved?.();
       onClose();
     } catch (error) {
@@ -95,6 +110,20 @@ const SaveRouteDialog: React.FC<SaveRouteDialogProps> = ({
               className="resize-none rounded-lg"
               rows={3}
             />
+          </div>
+          
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox 
+              id="share-community" 
+              checked={shareWithCommunity}
+              onCheckedChange={(checked) => setShareWithCommunity(checked as boolean)}
+            />
+            <Label 
+              htmlFor="share-community" 
+              className="text-sm font-medium leading-none cursor-pointer"
+            >
+              Share with community
+            </Label>
           </div>
         </div>
         

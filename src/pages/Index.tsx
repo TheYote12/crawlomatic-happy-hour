@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { toast } from "sonner";
 import Header from '@/components/Header';
@@ -13,7 +14,7 @@ import {
   searchNearbyPubs, 
   createPubCrawlRoute
 } from '@/utils/mapUtils';
-import { ChevronDown, BookmarkPlus, ArrowDownToLine } from 'lucide-react';
+import { ChevronDown, BookmarkPlus, ArrowDownToLine, PlusCircle, MapPin } from 'lucide-react';
 import GoogleMapsApiKeyInput from '@/components/GoogleMapsApiKeyInput';
 import { GoogleMapsApiKeyManager } from '@/utils/googleMapsApiKeyManager';
 import PubDetails from '@/components/PubDetails';
@@ -22,6 +23,8 @@ import SavedRoutes from '@/components/SavedRoutes';
 import ShareDialog from '@/components/ShareDialog';
 import RouteOptions, { OptimizePreference } from '@/components/RouteOptions';
 import { SavedRoute } from '@/utils/savedRoutesManager';
+import CommunityRoutes from '@/components/CommunityRoutes';
+import CustomPubCrawlBuilder from '@/components/CustomPubCrawlBuilder';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
@@ -37,6 +40,7 @@ const Index = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showSavedRoutes, setShowSavedRoutes] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showCustomBuilder, setShowCustomBuilder] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -164,6 +168,19 @@ const Index = () => {
     }
   }, [location]);
 
+  // Handle custom pub crawl creation
+  const handleCreateCustomCrawl = useCallback((customCrawl: PubCrawl) => {
+    setPubCrawl(customCrawl);
+    setActivePubIndex(0);
+    
+    // Scroll to results
+    if (resultsRef.current) {
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, []);
+
   // Handle pub card click
   const handlePubClick = useCallback((index: number) => {
     setActivePubIndex(index);
@@ -267,7 +284,16 @@ const Index = () => {
           </div>
         ) : (
           <div className="space-y-8 pt-8">
-            <div className="flex justify-end">
+            <div className="flex justify-between items-center">
+              <Button 
+                variant="outline" 
+                className="rounded-full px-5 py-2 border border-gray-200 text-gray-800 bg-white hover:bg-gray-50"
+                onClick={() => setShowCustomBuilder(true)}
+              >
+                <PlusCircle className="h-4 w-4 mr-2 text-primary" />
+                Create Custom Crawl
+              </Button>
+              
               <Button 
                 variant="outline" 
                 className="rounded-full px-5 py-2 border border-gray-200 text-gray-800 bg-white hover:bg-gray-50"
@@ -277,6 +303,13 @@ const Index = () => {
                 Saved Routes
               </Button>
             </div>
+            
+            {location && (
+              <CommunityRoutes
+                userLocation={location}
+                onSelectRoute={handleLoadSavedRoute}
+              />
+            )}
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div 
@@ -315,7 +348,9 @@ const Index = () => {
                 
                 <div ref={resultsRef} className="bg-white rounded-3xl p-6 shadow-sm">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-                    <h2 className="text-2xl sm:text-3xl font-medium text-gray-900">Your Pub Crawl</h2>
+                    <h2 className="text-2xl sm:text-3xl font-medium text-gray-900">
+                      {pubCrawl.isCustom ? 'Your Custom Pub Crawl' : 'Your Pub Crawl'}
+                    </h2>
                     
                     <RouteOptions 
                       pubCrawl={pubCrawl}
@@ -354,6 +389,11 @@ const Index = () => {
           pubCrawl={pubCrawl}
           isOpen={showSaveDialog}
           onClose={() => setShowSaveDialog(false)}
+          userLocation={location ? { 
+            lat: location.lat, 
+            lng: location.lng,
+            name: 'Current Location'
+          } : undefined}
         />
         
         <SavedRoutes 
@@ -366,6 +406,13 @@ const Index = () => {
           pubCrawl={pubCrawl}
           isOpen={showShareDialog}
           onClose={() => setShowShareDialog(false)}
+        />
+        
+        <CustomPubCrawlBuilder
+          location={location}
+          isOpen={showCustomBuilder}
+          onClose={() => setShowCustomBuilder(false)}
+          onCreateCrawl={handleCreateCustomCrawl}
         />
       </main>
     </div>
