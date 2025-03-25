@@ -6,7 +6,7 @@ import Map from '@/components/Map';
 import CrawlOptions, { CrawlOptionsData } from '@/components/CrawlOptions';
 import PubList from '@/components/PubList';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { getCurrentLocation, Coordinates } from '@/utils/locationUtils';
+import { getCurrentLocation, Coordinates, formatDistance } from '@/utils/locationUtils';
 import { 
   Place, 
   PubCrawl, 
@@ -31,7 +31,7 @@ const Index = () => {
   const [location, setLocation] = useState<Coordinates | null>(null);
   const [locationError, setLocationError] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(false);
-  const [isMapLoading, setIsMapLoading] = useState(true);
+  const [isMapLoading, setIsMapLoading] = useState(isMapLoading);
   const [isScrolled, setIsScrolled] = useState(false);
   const [pubCrawl, setPubCrawl] = useState<PubCrawl | null>(null);
   const [activePubIndex, setActivePubIndex] = useState(-1);
@@ -323,7 +323,10 @@ const Index = () => {
                 style={{ minHeight: '400px' }}
               >
                 <Map 
-                  location={location}
+                  location={{
+                    lat: location.latitude,
+                    lng: location.longitude
+                  }}
                   route={pubCrawl?.route || null}
                   pubCoordinates={(pubCrawl?.places || []).map(place => ({
                     lat: place.geometry.location.lat,
