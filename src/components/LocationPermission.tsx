@@ -24,24 +24,9 @@ const LocationPermission: React.FC<LocationPermissionProps> = ({
       </p>
       
       {error && (
-        <div className="flex items-start gap-2 text-destructive mb-6 p-4 bg-destructive/10 rounded-lg w-full">
-          <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-          <div className="text-sm">
-            <p className="font-medium mb-1">{error}</p>
-            {error.includes("Permission denied") && (
-              <ol className="text-xs list-decimal pl-4 text-left">
-                <li>Click the lock/globe icon in your browser's address bar</li>
-                <li>Select "Site settings" or "Permissions"</li>
-                <li>Set Location access to "Allow"</li>
-                <li>Refresh the page and try again</li>
-              </ol>
-            )}
-            {error.includes("Position unavailable") && (
-              <p className="text-xs text-left">
-                Your device is having trouble determining your location. Make sure you're not using a VPN, try using a different device or network connection, or try again later.
-              </p>
-            )}
-          </div>
+        <div className="flex items-center space-x-2 text-destructive mb-4 p-3 bg-destructive/10 rounded-lg w-full">
+          <AlertCircle className="h-5 w-5" />
+          <p className="text-sm">{error}</p>
         </div>
       )}
       

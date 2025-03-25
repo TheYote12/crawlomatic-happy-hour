@@ -1,15 +1,27 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, PlusCircle, MapPin, Trash2 } from 'lucide-react';
-import { createCustomPubCrawlRoute, Place, PubCrawl } from '@/utils/mapUtils';
+
+import React, { useState, useEffect } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 import { Coordinates } from '@/utils/locationUtils';
+import { 
+  Place, 
+  PubCrawl, 
+  searchNearbyPubs,
+  createCustomPubCrawlRoute
+} from '@/utils/mapUtils';
+import { GoogleMapsApiKeyManager } from '@/utils/googleMapsApiKeyManager';
 import { toast } from 'sonner';
-import LoadingSpinner from './LoadingSpinner';
-import { ScrollArea } from './ui/scroll-area';
-import PubCard from './PubCard';
-import { Alert, AlertDescription } from './ui/alert';
+import { Plus, Trash2, MapPin, X } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CustomPubCrawlBuilderProps {
   location: Coordinates | null;
@@ -25,113 +37,89 @@ const CustomPubCrawlBuilder: React.FC<CustomPubCrawlBuilderProps> = ({
   onCreateCrawl
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
+  const [searchDistance, setSearchDistance] = useState(2); // km
   const [searchResults, setSearchResults] = useState<Place[]>([]);
   const [selectedPubs, setSelectedPubs] = useState<Place[]>([]);
-  const [isCreatingRoute, setIsCreatingRoute] = useState(false);
-
-  // Reset state when dialog is opened
+  const [isSearching, setIsSearching] = useState(false);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const isMobile = useIsMobile();
+  
+  // Initialize map instance - in a real app, you'd use a map component
   useEffect(() => {
-    if (isOpen) {
-      setSearchTerm('');
-      setSearchResults([]);
-      setSelectedPubs([]);
+    if (isOpen && !map && window.google) {
+      const mapInstance = new window.google.maps.Map(
+        document.createElement('div'), // dummy element
+        { center: { lat: 0, lng: 0 }, zoom: 15 }
+      );
+      setMap(mapInstance);
     }
-  }, [isOpen]);
-
-  // Handle search
-  const handleSearch = useCallback(async () => {
-    if (!searchTerm.trim() || !location) {
-      toast.error('Please enter a search term');
+    
+    return () => {
+      setMap(null);
+    };
+  }, [isOpen, map]);
+  
+  const handleSearch = async () => {
+    if (!location || !map) {
+      toast.error('Location not available');
       return;
     }
-
+    
+    if (!GoogleMapsApiKeyManager.isKeyValid()) {
+      toast.error('Please set a valid Google Maps API key to search for pubs');
+      return;
+    }
+    
+    setIsSearching(true);
+    
     try {
-      setIsSearching(true);
+      // Search with keyword filter
+      const radiusInMeters = searchDistance * 1000;
+      let searchQuery = 'pub';
       
-      // Create a PlacesService instance
-      if (!window.google || !window.google.maps || !window.google.maps.places) {
-        toast.error('Google Maps Places API not loaded');
-        return;
+      if (searchTerm.trim()) {
+        searchQuery += ' ' + searchTerm.trim();
       }
       
-      const placesService = new window.google.maps.places.PlacesService(
-        document.createElement('div')
+      const pubs = await searchNearbyPubs(
+        location, 
+        radiusInMeters, 
+        map, 
+        20, 
+        searchQuery
       );
       
-      const request = {
-        location: new window.google.maps.LatLng(location.lat, location.lng),
-        radius: 5000, // 5km
-        keyword: searchTerm,
-        type: 'bar' // Focus on bars
-      };
-      
-      placesService.nearbySearch(request, (results, status) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
-          // Convert Google Places results to our Place interface
-          const places: Place[] = results.map(result => ({
-            id: result.place_id || Math.random().toString(36).substring(2, 15),
-            place_id: result.place_id,
-            name: result.name || 'Unknown Place',
-            vicinity: result.vicinity || 'No address available',
-            rating: result.rating,
-            geometry: {
-              location: {
-                lat: result.geometry?.location?.lat() || 0,
-                lng: result.geometry?.location?.lng() || 0
-              }
-            },
-            photos: result.photos?.map(photo => ({ 
-              photo_reference: photo.getUrl() || '' 
-            })),
-            price_level: result.price_level
-          }));
-          
-          setSearchResults(places);
-          
-          if (places.length === 0) {
-            toast.info('No places found with that search term');
-          }
-        } else {
-          console.error('Places search error:', status);
-          toast.error('Could not find any places. Try another search term.');
-          setSearchResults([]);
-        }
-        
-        setIsSearching(false);
-      });
+      if (pubs.length === 0) {
+        toast.error('No pubs found with that search term. Try another keyword or increase the distance.');
+      } else {
+        setSearchResults(pubs);
+        toast.success(`Found ${pubs.length} pubs`);
+      }
     } catch (error) {
       console.error('Search error:', error);
-      toast.error('Error performing search');
+      toast.error('Error searching for pubs');
+    } finally {
       setIsSearching(false);
     }
-  }, [searchTerm, location]);
-
-  // Add pub to selection
-  const handleAddPub = useCallback((pub: Place) => {
-    setSelectedPubs(prev => {
-      // Check if already added
-      if (prev.some(p => p.id === pub.id)) {
-        toast.info('This pub is already in your selection');
-        return prev;
-      }
-      
-      // Add to selection
-      toast.success(`Added ${pub.name} to your custom crawl`);
-      return [...prev, pub];
-    });
-  }, []);
-
-  // Remove pub from selection
-  const handleRemovePub = useCallback((pubId: string) => {
-    setSelectedPubs(prev => {
-      const newPubs = prev.filter(p => p.id !== pubId);
-      return newPubs;
-    });
-  }, []);
-
-  // Create the custom pub crawl
-  const handleCreateRoute = useCallback(async () => {
+  };
+  
+  const handleAddPub = (pub: Place) => {
+    // Don't add duplicates
+    if (selectedPubs.some(p => p.place_id === pub.place_id)) {
+      toast.error('This pub is already in your crawl');
+      return;
+    }
+    
+    // Add pub to selected list
+    setSelectedPubs([...selectedPubs, pub]);
+    toast.success(`Added ${pub.name} to your crawl`);
+  };
+  
+  const handleRemovePub = (pubId: string) => {
+    setSelectedPubs(selectedPubs.filter(pub => pub.place_id !== pubId));
+  };
+  
+  const handleCreateCrawl = async () => {
     if (!location) {
       toast.error('Location not available');
       return;
@@ -143,159 +131,180 @@ const CustomPubCrawlBuilder: React.FC<CustomPubCrawlBuilderProps> = ({
     }
     
     try {
-      setIsCreatingRoute(true);
-      
-      // Create a custom pub crawl route
-      const customCrawl = await createCustomPubCrawlRoute(location, selectedPubs);
+      // Create a custom crawl route
+      const customCrawl = await createCustomPubCrawlRoute(
+        location, 
+        selectedPubs
+      );
       
       onCreateCrawl(customCrawl);
-      onClose();
       toast.success('Custom pub crawl created!');
+      
+      // Reset state
+      setSelectedPubs([]);
+      setSearchResults([]);
+      setSearchTerm('');
+      
+      onClose();
     } catch (error) {
       console.error('Error creating custom crawl:', error);
       toast.error('Failed to create custom pub crawl');
-    } finally {
-      setIsCreatingRoute(false);
     }
-  }, [location, selectedPubs, onCreateCrawl, onClose]);
-
+  };
+  
+  const renderPubItem = (pub: Place, isSelected: boolean = false) => (
+    <div 
+      key={pub.place_id}
+      className="p-3 border border-gray-200 rounded-lg flex justify-between items-center bg-white hover:bg-gray-50"
+    >
+      <div className="flex flex-col">
+        <div className="font-medium text-sm">{pub.name}</div>
+        <div className="text-xs text-gray-500 truncate max-w-[200px]">
+          {pub.vicinity || pub.formatted_address}
+        </div>
+      </div>
+      
+      <Button
+        variant={isSelected ? "destructive" : "default"}
+        size="xs"
+        className="rounded-full flex items-center gap-1 h-8"
+        onClick={() => isSelected 
+          ? handleRemovePub(pub.place_id) 
+          : handleAddPub(pub)
+        }
+      >
+        {isSelected ? (
+          <>
+            <Trash2 className="h-3 w-3" />
+            <span>Remove</span>
+          </>
+        ) : (
+          <>
+            <Plus className="h-3 w-3" />
+            <span>Add</span>
+          </>
+        )}
+      </Button>
+    </div>
+  );
+  
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className={`sm:max-w-[600px] max-h-[80vh] overflow-hidden flex flex-col rounded-xl ${isOpen ? 'overflow-y-auto' : ''}`}>
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold mb-2">
-            Build Your Own Pub Crawl
-          </DialogTitle>
+          <DialogTitle>Create Custom Pub Crawl</DialogTitle>
+          <DialogDescription>
+            Search for pubs and create your own custom pub crawl.
+          </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4">
-          {/* Search input */}
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Search for pubs to add..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="flex-1"
-            />
-            <Button 
-              variant="default" 
-              size="sm" 
-              onClick={handleSearch}
-              disabled={isSearching}
-            >
-              {isSearching ? <LoadingSpinner size="small" /> : <Search className="h-4 w-4" />}
-            </Button>
+        <div className="flex flex-col gap-4">
+          {/* Search inputs */}
+          <div className="grid grid-cols-4 gap-3">
+            <div className="col-span-3">
+              <Label htmlFor="pub-search" className="sr-only">Search for pubs</Label>
+              <Input
+                id="pub-search"
+                placeholder="Search for pubs (e.g., irish, craft beer, etc.)"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div className="col-span-1">
+              <Label htmlFor="search-distance" className="sr-only">Distance (km)</Label>
+              <Input
+                id="search-distance"
+                type="number"
+                placeholder="Distance (km)"
+                min={0.5}
+                max={10}
+                step={0.5}
+                value={searchDistance}
+                onChange={(e) => setSearchDistance(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+          </div>
+          
+          <Button 
+            onClick={handleSearch} 
+            disabled={isSearching}
+            className="rounded-full"
+          >
+            {isSearching ? 'Searching...' : 'Search for Pubs'}
+          </Button>
+          
+          {/* Selected pubs section */}
+          <div className="mt-2">
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-base font-medium">Selected Pubs ({selectedPubs.length})</Label>
+              {selectedPubs.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setSelectedPubs([])}
+                  className="h-6 text-xs"
+                >
+                  Clear All
+                </Button>
+              )}
+            </div>
+            
+            {selectedPubs.length === 0 ? (
+              <div className="text-center py-6 border border-dashed border-gray-200 rounded-lg bg-gray-50">
+                <MapPin className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">
+                  Add pubs from the search results to create your custom crawl
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-2 max-h-[150px] overflow-y-auto p-1">
+                {selectedPubs.map(pub => renderPubItem(pub, true))}
+              </div>
+            )}
           </div>
           
           {/* Search results */}
           {searchResults.length > 0 && (
-            <>
-              <h3 className="text-sm font-medium text-gray-500">
-                Search Results ({searchResults.length})
-              </h3>
-              
-              <ScrollArea className="h-60 rounded-md border">
-                <div className="p-4 space-y-2">
-                  {searchResults.map(pub => (
-                    <div 
-                      key={pub.id} 
-                      className="p-3 rounded-lg border hover:bg-gray-50 flex items-center justify-between"
-                    >
-                      <div>
-                        <h4 className="font-medium">{pub.name}</h4>
-                        <p className="text-xs text-gray-500">{pub.vicinity}</p>
-                        {pub.rating && (
-                          <div className="flex items-center gap-1 mt-1">
-                            <span className="text-xs">⭐ {pub.rating}</span>
-                            {pub.price_level && (
-                              <span className="text-xs">
-                                {Array(pub.price_level).fill('£').join('')}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        onClick={() => handleAddPub(pub)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <PlusCircle className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </>
-          )}
-          
-          {/* Selected pubs */}
-          <div className="mt-4">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">
-              Your Selection ({selectedPubs.length})
-            </h3>
-            
-            {selectedPubs.length === 0 ? (
-              <div className="rounded-md border p-4 text-center text-sm text-gray-500">
-                <MapPin className="h-6 w-6 mx-auto mb-2 text-gray-400" />
-                <p>No pubs selected yet. Search and add some above!</p>
+            <div className="mt-2">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-base font-medium">Search Results ({searchResults.length})</Label>
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setSearchResults([])}
+                  className="h-6 text-xs"
+                >
+                  Clear Results
+                </Button>
               </div>
-            ) : (
-              <ScrollArea className="h-60 rounded-md border">
-                <div className="p-4 space-y-2">
-                  {selectedPubs.map((pub, index) => (
-                    <div 
-                      key={pub.id} 
-                      className="p-3 rounded-lg border hover:bg-gray-50 flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-medium">
-                          {index + 1}
-                        </div>
-                        <div>
-                          <h4 className="font-medium">{pub.name}</h4>
-                          <p className="text-xs text-gray-500">{pub.vicinity}</p>
-                        </div>
-                      </div>
-                      
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        onClick={() => handleRemovePub(pub.id)}
-                        className="h-8 w-8 p-0 text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
-          </div>
-          
-          {selectedPubs.length > 0 && (
-            <Alert className="mt-4">
-              <AlertDescription>
-                Your custom crawl will start at your current location and visit each pub in the order shown above.
-              </AlertDescription>
-            </Alert>
+              
+              <div className="grid gap-2 max-h-[200px] overflow-y-auto p-1">
+                {searchResults.map(pub => {
+                  // Don't show pubs that are already selected
+                  if (selectedPubs.some(p => p.place_id === pub.place_id)) {
+                    return null;
+                  }
+                  return renderPubItem(pub);
+                })}
+              </div>
+            </div>
           )}
-          
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button 
-              disabled={selectedPubs.length < 2 || isCreatingRoute} 
-              onClick={handleCreateRoute}
-            >
-              {isCreatingRoute ? <LoadingSpinner size="small" /> : 'Create Pub Crawl'}
-            </Button>
-          </div>
         </div>
+        
+        <DialogFooter className="mt-6">
+          <Button variant="outline" onClick={onClose} className="rounded-full border-gray-200">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleCreateCrawl} 
+            disabled={selectedPubs.length < 2}
+            className="rounded-full"
+          >
+            Create Custom Crawl
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

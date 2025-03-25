@@ -73,7 +73,7 @@ const Map: React.FC<MapProps> = ({
     
     // Add user location marker
     new google.maps.Marker({
-      position: { lat: location.lat, lng: location.lng },
+      position: { lat: location.latitude, lng: location.longitude },
       map,
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
@@ -106,14 +106,14 @@ const Map: React.FC<MapProps> = ({
         map: mapRef.current,
         label: {
           text: (index + 1).toString(),
-          color: '#FFFFFF',
+          color: '#3b82f6',
           fontWeight: 'bold'
         },
         title: pub.name
       });
       
       const infoWindow = new google.maps.InfoWindow({
-        content: `<div class="p-2"><h3 class="font-semibold">${pub.name}</h3><p>Stop #${index + 1}</p></div>`
+        content: `<h3 class="font-semibold text-sm">${pub.name}</h3>`
       });
       
       marker.addListener('click', () => {
@@ -126,7 +126,7 @@ const Map: React.FC<MapProps> = ({
     // Fit bounds to include all markers if no route is available
     if (!route && mapRef.current) {
       const bounds = new google.maps.LatLngBounds();
-      bounds.extend({ lat: location.lat, lng: location.lng });
+      bounds.extend({ lat: location.latitude, lng: location.longitude });
       pubCoordinates.forEach(pub => {
         bounds.extend({ lat: pub.lat, lng: pub.lng });
       });
@@ -194,7 +194,7 @@ const Map: React.FC<MapProps> = ({
     <div className="relative h-full w-full rounded-2xl overflow-hidden shadow-lg">
       <GoogleMap
         mapContainerStyle={containerStyle}
-        center={{ lat: location.lat, lng: location.lng }}
+        center={{ lat: location.latitude, lng: location.longitude }}
         zoom={15}
         onLoad={handleOnLoad}
         onUnmount={handleOnUnmount}

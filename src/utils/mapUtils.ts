@@ -1,3 +1,4 @@
+
 import { Coordinates } from "./locationUtils";
 import { toast } from "sonner";
 import { GoogleMapsApiKeyManager } from './googleMapsApiKeyManager';
@@ -5,7 +6,6 @@ import { GoogleMapsApiKeyManager } from './googleMapsApiKeyManager';
 // Define interfaces
 export interface Place {
   id: string;
-  place_id?: string;
   name: string;
   vicinity: string;
   rating?: number;
@@ -33,7 +33,6 @@ export interface PubCrawl {
   route: google.maps.DirectionsResult | null;
   totalDistance: number;
   totalDuration: number;
-  isCustom?: boolean;
 }
 
 /**
@@ -64,14 +63,14 @@ export const searchNearbyPubs = async (
       
       // Log the request details for debugging
       console.log("Places API request:", {
-        location: new google.maps.LatLng(location.lat, location.lng),
+        location: new google.maps.LatLng(location.latitude, location.longitude),
         radius,
         type: 'bar',
         keyword: 'pub'
       });
       
       const request = {
-        location: new google.maps.LatLng(location.lat, location.lng),
+        location: new google.maps.LatLng(location.latitude, location.longitude),
         radius,
         type: 'bar',
         keyword: 'pub'
@@ -85,7 +84,6 @@ export const searchNearbyPubs = async (
           
           const places: Place[] = results.slice(0, maxResults).map(place => ({
             id: place.place_id || Math.random().toString(36).substring(2, 9),
-            place_id: place.place_id,
             name: place.name || "Unnamed Pub",
             vicinity: place.vicinity || "",
             rating: place.rating,
@@ -94,8 +92,8 @@ export const searchNearbyPubs = async (
             })),
             geometry: {
               location: {
-                lat: place.geometry?.location?.lat() || location.lat,
-                lng: place.geometry?.location?.lng() || location.lng
+                lat: place.geometry?.location?.lat() || location.latitude,
+                lng: place.geometry?.location?.lng() || location.longitude
               }
             },
             opening_hours: {
@@ -182,13 +180,13 @@ export const createPubCrawlRoute = async (
       }));
       
       const request: google.maps.DirectionsRequest = {
-        origin: new google.maps.LatLng(startLocation.lat, startLocation.lng),
+        origin: new google.maps.LatLng(startLocation.latitude, startLocation.longitude),
         destination: filteredPlaces.length > 0 
           ? new google.maps.LatLng(
               filteredPlaces[filteredPlaces.length - 1].geometry.location.lat,
               filteredPlaces[filteredPlaces.length - 1].geometry.location.lng
             )
-          : new google.maps.LatLng(startLocation.lat, startLocation.lng),
+          : new google.maps.LatLng(startLocation.latitude, startLocation.longitude),
         waypoints,
         travelMode: google.maps.TravelMode.WALKING,
         optimizeWaypoints: true
@@ -243,8 +241,8 @@ export const createPubCrawlRoute = async (
           const totalDistance = calculateTotalDirectDistance(
             startLocation,
             filteredPlaces.map(place => ({
-              lat: place.geometry.location.lat,
-              lng: place.geometry.location.lng
+              latitude: place.geometry.location.lat,
+              longitude: place.geometry.location.lng
             }))
           );
           
@@ -268,119 +266,9 @@ export const createPubCrawlRoute = async (
 };
 
 /**
- * Creates a custom pub crawl route with selected pubs
- */
-export const createCustomPubCrawlRoute = async (
-  startLocation: Coordinates,
-  selectedPubs: Place[]
-): Promise<PubCrawl> => {
-  try {
-    if (selectedPubs.length === 0) {
-      throw new Error("No pubs selected for the custom route");
-    }
-
-    const apiKey = GoogleMapsApiKeyManager.getApiKey();
-    if (!apiKey) {
-      throw new Error("Google Maps API key is not set");
-    }
-
-    // Create DirectionsService
-    return new Promise((resolve, reject) => {
-      if (!window.google || !window.google.maps) {
-        reject(new Error("Google Maps not loaded"));
-        return;
-      }
-      
-      const directionsService = new google.maps.DirectionsService();
-      
-      // Create waypoints for the Directions API
-      const waypoints = selectedPubs.slice(1, -1).map(place => ({
-        location: new google.maps.LatLng(
-          place.geometry.location.lat,
-          place.geometry.location.lng
-        ),
-        stopover: true
-      }));
-      
-      const request: google.maps.DirectionsRequest = {
-        origin: new google.maps.LatLng(startLocation.lat, startLocation.lng),
-        destination: selectedPubs.length > 0 
-          ? new google.maps.LatLng(
-              selectedPubs[selectedPubs.length - 1].geometry.location.lat,
-              selectedPubs[selectedPubs.length - 1].geometry.location.lng
-            )
-          : new google.maps.LatLng(startLocation.lat, startLocation.lng),
-        waypoints,
-        travelMode: google.maps.TravelMode.WALKING,
-        optimizeWaypoints: true
-      };
-      
-      directionsService.route(request, (result, status) => {
-        if (status === google.maps.DirectionsStatus.OK && result) {
-          console.log("Directions API response:", result);
-          
-          // Calculate total distance and duration
-          let totalDistance = 0;
-          let totalDuration = 0;
-          
-          result.routes[0].legs.forEach(leg => {
-            if (leg.distance && leg.duration) {
-              totalDistance += leg.distance.value / 1000; // Convert to kilometers
-              totalDuration += leg.duration.value / 60; // Convert to minutes
-            }
-          });
-          
-          // Add time for each pub visit (30 minutes per pub)
-          totalDuration += selectedPubs.length * 30;
-          
-          resolve({
-            places: selectedPubs,
-            route: result,
-            totalDistance,
-            totalDuration,
-            isCustom: true
-          });
-        } else {
-          console.error("Directions service failed:", status);
-          
-          // Fallback to direct distance calculation if no routes
-          const fallbackCoordinates = selectedPubs.map(place => ({
-            lat: place.geometry.location.lat,
-            lng: place.geometry.location.lng
-          }));
-          
-          const totalDistance = calculateTotalDirectDistance(
-            startLocation,
-            fallbackCoordinates
-          );
-          
-          // Estimate walking time (assuming 5 km/h walking speed)
-          const totalDuration = (totalDistance / 5) * 60 + selectedPubs.length * 30;
-          
-          resolve({
-            places: selectedPubs,
-            route: null,
-            totalDistance,
-            totalDuration,
-            isCustom: true
-          });
-        }
-      });
-    });
-  } catch (error) {
-    console.error('Error creating custom pub crawl route:', error);
-    toast.error('Failed to create custom route');
-    throw new Error('Failed to create custom route');
-  }
-};
-
-/**
  * Calculate total direct distance between a series of coordinates
  */
-const calculateTotalDirectDistance = (
-  start: Coordinates,
-  points: Coordinates[]
-): number => {
+const calculateTotalDirectDistance = (start: Coordinates, points: Coordinates[]): number => {
   let totalDistance = 0;
   let currentPoint = start;
   
@@ -397,12 +285,12 @@ const calculateTotalDirectDistance = (
  */
 const calculateDirectDistance = (from: Coordinates, to: Coordinates): number => {
   const R = 6371; // Earth's radius in km
-  const dLat = toRadians(to.lat - from.lat);
-  const dLon = toRadians(to.lng - from.lng);
+  const dLat = toRadians(to.latitude - from.latitude);
+  const dLon = toRadians(to.longitude - from.longitude);
   
   const a = 
     Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(toRadians(from.lat)) * Math.cos(toRadians(to.lat)) * 
+    Math.cos(toRadians(from.latitude)) * Math.cos(toRadians(to.latitude)) * 
     Math.sin(dLon/2) * Math.sin(dLon/2);
   
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));

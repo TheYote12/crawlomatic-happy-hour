@@ -6,15 +6,15 @@ import LocationPermission from '@/components/LocationPermission';
 import Map from '@/components/Map';
 import CrawlOptions, { CrawlOptionsData } from '@/components/CrawlOptions';
 import PubList from '@/components/PubList';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { getCurrentLocation, Coordinates } from '@/utils/locationUtils';
 import { 
   Place, 
   PubCrawl, 
   searchNearbyPubs, 
-  createPubCrawlRoute,
-  createCustomPubCrawlRoute
+  createPubCrawlRoute
 } from '@/utils/mapUtils';
-import { ChevronDown, BookmarkPlus, MapPin, PlusCircle } from 'lucide-react';
+import { ChevronDown, BookmarkPlus, ArrowDownToLine, PlusCircle, MapPin } from 'lucide-react';
 import GoogleMapsApiKeyInput from '@/components/GoogleMapsApiKeyInput';
 import { GoogleMapsApiKeyManager } from '@/utils/googleMapsApiKeyManager';
 import PubDetails from '@/components/PubDetails';
@@ -26,7 +26,6 @@ import { SavedRoute } from '@/utils/savedRoutesManager';
 import CommunityRoutes from '@/components/CommunityRoutes';
 import CustomPubCrawlBuilder from '@/components/CustomPubCrawlBuilder';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Index = () => {
   const [location, setLocation] = useState<Coordinates | null>(null);
@@ -47,7 +46,30 @@ const Index = () => {
   const resultsRef = useRef<HTMLDivElement>(null);
   const lastOptionsRef = useRef<CrawlOptionsData | null>(null);
 
-  // Handle location request with more robust error handling
+  // Set default API key on component mount if not already set
+  useEffect(() => {
+    const apiKey = GoogleMapsApiKeyManager.getApiKey();
+    console.log("Current API key status:", apiKey ? "Set" : "Not set");
+    
+    if (!apiKey) {
+      // Force set the default key from GoogleMapsApiKeyManager
+      const defaultKey = 'AIzaSyA1I9dNXno-OQUM4fYc-0Fogsr4QQgJ0_E';
+      GoogleMapsApiKeyManager.setApiKey(defaultKey);
+      console.log("Default API key applied");
+    }
+  }, []);
+
+  // Handle scroll events
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Handle location request
   const handleRequestLocation = useCallback(async () => {
     try {
       setLocationError(undefined);
@@ -58,17 +80,8 @@ const Index = () => {
       toast.success('Location found!');
     } catch (error) {
       console.error('Error getting location:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Could not access your location. Please check your browser permissions and try again.';
-      setLocationError(errorMessage);
-      
-      // More specific error messaging
-      if (errorMessage.includes('Position unavailable')) {
-        toast.error('Could not determine your location. Try a different browser or device.', {
-          description: 'This error often occurs in development environments or with certain privacy settings.'
-        });
-      } else {
-        toast.error('Could not access your location.');
-      }
+      setLocationError('Could not access your location. Please check your browser permissions and try again.');
+      toast.error('Could not access your location.');
     } finally {
       setIsLoading(false);
     }
@@ -293,10 +306,7 @@ const Index = () => {
             
             {location && (
               <CommunityRoutes
-                userLocation={{
-                  lat: location.lat,
-                  lng: location.lng
-                }}
+                userLocation={location}
                 onSelectRoute={handleLoadSavedRoute}
               />
             )}
