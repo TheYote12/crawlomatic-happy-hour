@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -22,6 +21,7 @@ import { GoogleMapsApiKeyManager } from '@/utils/googleMapsApiKeyManager';
 import { toast } from 'sonner';
 import { Plus, Trash2, MapPin, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import LoadingSpinner from './LoadingSpinner';
 
 interface CustomPubCrawlBuilderProps {
   location: Coordinates | null;

@@ -15,17 +15,40 @@ export const getCurrentLocation = (): Promise<Coordinates> => {
       return;
     }
 
+    // Success handler
+    const successHandler = (position: GeolocationPosition) => {
+      resolve({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      });
+    };
+
+    // Error handler with more detailed error messages
+    const errorHandler = (error: GeolocationPositionError) => {
+      console.error("Error getting location:", error);
+      
+      let errorMessage: string;
+      
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          errorMessage = "Location permission was denied. Please enable location access in your browser settings.";
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMessage = "Location information is unavailable. Please try again or use a different device.";
+          break;
+        case error.TIMEOUT:
+          errorMessage = "Location request timed out. Please check your connection and try again.";
+          break;
+        default:
+          errorMessage = "An unknown error occurred while trying to access your location.";
+      }
+      
+      reject(new Error(errorMessage));
+    };
+
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        resolve({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      },
-      (error) => {
-        console.error("Error getting location:", error);
-        reject(error);
-      },
+      successHandler,
+      errorHandler,
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   });

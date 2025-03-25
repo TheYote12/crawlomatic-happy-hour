@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { toast } from "sonner";
 import Header from '@/components/Header';
@@ -12,7 +11,8 @@ import {
   Place, 
   PubCrawl, 
   searchNearbyPubs, 
-  createPubCrawlRoute
+  createPubCrawlRoute,
+  createCustomPubCrawlRoute
 } from '@/utils/mapUtils';
 import { ChevronDown, BookmarkPlus, ArrowDownToLine, PlusCircle, MapPin } from 'lucide-react';
 import GoogleMapsApiKeyInput from '@/components/GoogleMapsApiKeyInput';
@@ -80,7 +80,7 @@ const Index = () => {
       toast.success('Location found!');
     } catch (error) {
       console.error('Error getting location:', error);
-      setLocationError('Could not access your location. Please check your browser permissions and try again.');
+      setLocationError(error instanceof Error ? error.message : 'Could not access your location. Please check your browser permissions and try again.');
       toast.error('Could not access your location.');
     } finally {
       setIsLoading(false);
@@ -170,7 +170,13 @@ const Index = () => {
 
   // Handle custom pub crawl creation
   const handleCreateCustomCrawl = useCallback((customCrawl: PubCrawl) => {
-    setPubCrawl(customCrawl);
+    // Add isCustom flag to the crawl
+    const customizedCrawl: PubCrawl = {
+      ...customCrawl,
+      isCustom: true
+    };
+    
+    setPubCrawl(customizedCrawl);
     setActivePubIndex(0);
     
     // Scroll to results
@@ -390,8 +396,8 @@ const Index = () => {
           isOpen={showSaveDialog}
           onClose={() => setShowSaveDialog(false)}
           userLocation={location ? { 
-            lat: location.lat, 
-            lng: location.lng,
+            lat: location.latitude, 
+            lng: location.longitude,
             name: 'Current Location'
           } : undefined}
         />
