@@ -1,4 +1,3 @@
-
 import { Coordinates } from './locationUtils';
 import { toast } from "sonner";
 import { GoogleMapsApiKeyManager } from './googleMapsApiKeyManager';
@@ -56,7 +55,7 @@ export interface PubCrawl {
  * Searches for pubs near a given location using Google Places API
  */
 export const searchNearbyPubs = async (
-  location: Coordinates,
+  location: { lat: number; lng: number }, // Updated to use lat/lng format directly
   radius: number,
   map: google.maps.Map,
   maxResults = 10,
@@ -81,14 +80,14 @@ export const searchNearbyPubs = async (
       
       // Log the request details for debugging
       console.log("Places API request:", {
-        location: new google.maps.LatLng(location.latitude, location.longitude),
+        location: new google.maps.LatLng(location.lat, location.lng),
         radius,
         type: 'bar',
         keyword
       });
       
       const request = {
-        location: new google.maps.LatLng(location.latitude, location.longitude),
+        location: new google.maps.LatLng(location.lat, location.lng),
         radius,
         type: 'bar',
         keyword
@@ -111,8 +110,8 @@ export const searchNearbyPubs = async (
             })),
             geometry: {
               location: {
-                lat: place.geometry?.location?.lat() || location.latitude,
-                lng: place.geometry?.location?.lng() || location.longitude
+                lat: place.geometry?.location?.lat() || location.lat,
+                lng: place.geometry?.location?.lng() || location.lng
               }
             },
             opening_hours: {
@@ -163,7 +162,7 @@ export const searchNearbyPubs = async (
  * Creates an optimized pub crawl route using Google Directions API
  */
 export const createPubCrawlRoute = async (
-  startLocation: Coordinates,
+  startLocation: { lat: number; lng: number }, // Updated to use lat/lng format directly
   places: Place[],
   maxStops: number
 ): Promise<PubCrawl> => {
@@ -199,13 +198,13 @@ export const createPubCrawlRoute = async (
       }));
       
       const request: google.maps.DirectionsRequest = {
-        origin: new google.maps.LatLng(startLocation.latitude, startLocation.longitude),
+        origin: new google.maps.LatLng(startLocation.lat, startLocation.lng),
         destination: filteredPlaces.length > 0 
           ? new google.maps.LatLng(
               filteredPlaces[filteredPlaces.length - 1].geometry.location.lat,
               filteredPlaces[filteredPlaces.length - 1].geometry.location.lng
             )
-          : new google.maps.LatLng(startLocation.latitude, startLocation.longitude),
+          : new google.maps.LatLng(startLocation.lat, startLocation.lng),
         waypoints,
         travelMode: google.maps.TravelMode.WALKING,
         optimizeWaypoints: true
@@ -260,8 +259,8 @@ export const createPubCrawlRoute = async (
           const totalDistance = calculateTotalDirectDistance(
             startLocation,
             filteredPlaces.map(place => ({
-              latitude: place.geometry.location.lat,
-              longitude: place.geometry.location.lng
+              lat: place.geometry.location.lat,
+              lng: place.geometry.location.lng
             }))
           );
           
@@ -288,7 +287,7 @@ export const createPubCrawlRoute = async (
  * Creates a custom pub crawl route from user-selected pubs
  */
 export const createCustomPubCrawlRoute = async (
-  startLocation: Coordinates,
+  startLocation: { lat: number; lng: number }, // Updated to use lat/lng format directly
   selectedPubs: Place[]
 ): Promise<PubCrawl> => {
   try {
@@ -322,7 +321,7 @@ export const createCustomPubCrawlRoute = async (
       }));
       
       const request: google.maps.DirectionsRequest = {
-        origin: new google.maps.LatLng(startLocation.latitude, startLocation.longitude),
+        origin: new google.maps.LatLng(startLocation.lat, startLocation.lng),
         destination: new google.maps.LatLng(
           selectedPubs[selectedPubs.length - 1].geometry.location.lat,
           selectedPubs[selectedPubs.length - 1].geometry.location.lng
@@ -364,8 +363,8 @@ export const createCustomPubCrawlRoute = async (
           const totalDistance = calculateTotalDirectDistance(
             startLocation,
             selectedPubs.map(place => ({
-              latitude: place.geometry.location.lat,
-              longitude: place.geometry.location.lng
+              lat: place.geometry.location.lat,
+              lng: place.geometry.location.lng
             }))
           );
           
@@ -392,7 +391,7 @@ export const createCustomPubCrawlRoute = async (
 /**
  * Calculate total direct distance between a series of coordinates
  */
-const calculateTotalDirectDistance = (start: Coordinates, points: Coordinates[]): number => {
+const calculateTotalDirectDistance = (start: { lat: number; lng: number }, points: { lat: number; lng: number }[]): number => {
   let totalDistance = 0;
   let currentPoint = start;
   
@@ -407,14 +406,14 @@ const calculateTotalDirectDistance = (start: Coordinates, points: Coordinates[])
 /**
  * Calculate direct distance between two coordinates using the Haversine formula
  */
-const calculateDirectDistance = (from: Coordinates, to: Coordinates): number => {
+const calculateDirectDistance = (from: { lat: number; lng: number }, to: { lat: number; lng: number }): number => {
   const R = 6371; // Earth's radius in km
-  const dLat = toRadians(to.latitude - from.latitude);
-  const dLon = toRadians(to.longitude - from.longitude);
+  const dLat = toRadians(to.lat - from.lat);
+  const dLon = toRadians(to.lng - from.lng);
   
   const a = 
     Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(toRadians(from.latitude)) * Math.cos(toRadians(to.latitude)) * 
+    Math.cos(toRadians(from.lat)) * Math.cos(toRadians(to.lat)) * 
     Math.sin(dLon/2) * Math.sin(dLon/2);
   
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));

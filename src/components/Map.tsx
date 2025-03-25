@@ -8,7 +8,7 @@ import { GoogleMapsApiKeyManager } from '../utils/googleMapsApiKeyManager';
 import { Button } from './ui/button';
 
 interface MapProps {
-  location: Coordinates;
+  location: { lat: number; lng: number }; // Changed from Coordinates to match expected format
   route: google.maps.DirectionsResult | null;
   pubCoordinates: Array<{ lat: number; lng: number; name: string }>;
   activePubIndex: number;
@@ -73,7 +73,7 @@ const Map: React.FC<MapProps> = ({
     
     // Add user location marker
     new google.maps.Marker({
-      position: { lat: location.latitude, lng: location.longitude },
+      position: { lat: location.lat, lng: location.lng }, // Updated to use lat/lng directly
       map,
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
