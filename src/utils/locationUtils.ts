@@ -37,7 +37,7 @@ export const getCurrentLocation = (): Promise<Coordinates> => {
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000, // Increased timeout to 10 seconds
+        timeout: 15000, // Increased timeout to 15 seconds
         maximumAge: 0
       }
     );
