@@ -31,7 +31,7 @@ const Index = () => {
   const [location, setLocation] = useState<Coordinates | null>(null);
   const [locationError, setLocationError] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(false);
-  const [isMapLoading, setIsMapLoading] = useState(isMapLoading);
+  const [isMapLoading, setIsMapLoading] = useState(true); // Fixed: Declare before using
   const [isScrolled, setIsScrolled] = useState(false);
   const [pubCrawl, setPubCrawl] = useState<PubCrawl | null>(null);
   const [activePubIndex, setActivePubIndex] = useState(-1);
@@ -312,7 +312,10 @@ const Index = () => {
             
             {location && (
               <CommunityRoutes
-                userLocation={location}
+                userLocation={{
+                  lat: location.latitude,
+                  lng: location.longitude
+                }}
                 onSelectRoute={handleLoadSavedRoute}
               />
             )}
