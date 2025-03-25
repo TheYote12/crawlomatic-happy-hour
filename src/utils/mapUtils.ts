@@ -64,14 +64,14 @@ export const searchNearbyPubs = async (
       
       // Log the request details for debugging
       console.log("Places API request:", {
-        location: new google.maps.LatLng(location.latitude, location.longitude),
+        location: new google.maps.LatLng(location.lat, location.lng),
         radius,
         type: 'bar',
         keyword: 'pub'
       });
       
       const request = {
-        location: new google.maps.LatLng(location.latitude, location.longitude),
+        location: new google.maps.LatLng(location.lat, location.lng),
         radius,
         type: 'bar',
         keyword: 'pub'
@@ -85,6 +85,7 @@ export const searchNearbyPubs = async (
           
           const places: Place[] = results.slice(0, maxResults).map(place => ({
             id: place.place_id || Math.random().toString(36).substring(2, 9),
+            place_id: place.place_id,
             name: place.name || "Unnamed Pub",
             vicinity: place.vicinity || "",
             rating: place.rating,
@@ -93,8 +94,8 @@ export const searchNearbyPubs = async (
             })),
             geometry: {
               location: {
-                lat: place.geometry?.location?.lat() || location.latitude,
-                lng: place.geometry?.location?.lng() || location.longitude
+                lat: place.geometry?.location?.lat() || location.lat,
+                lng: place.geometry?.location?.lng() || location.lng
               }
             },
             opening_hours: {
@@ -181,13 +182,13 @@ export const createPubCrawlRoute = async (
       }));
       
       const request: google.maps.DirectionsRequest = {
-        origin: new google.maps.LatLng(startLocation.latitude, startLocation.longitude),
+        origin: new google.maps.LatLng(startLocation.lat, startLocation.lng),
         destination: filteredPlaces.length > 0 
           ? new google.maps.LatLng(
               filteredPlaces[filteredPlaces.length - 1].geometry.location.lat,
               filteredPlaces[filteredPlaces.length - 1].geometry.location.lng
             )
-          : new google.maps.LatLng(startLocation.latitude, startLocation.longitude),
+          : new google.maps.LatLng(startLocation.lat, startLocation.lng),
         waypoints,
         travelMode: google.maps.TravelMode.WALKING,
         optimizeWaypoints: true
@@ -242,8 +243,8 @@ export const createPubCrawlRoute = async (
           const totalDistance = calculateTotalDirectDistance(
             startLocation,
             filteredPlaces.map(place => ({
-              latitude: place.geometry.location.lat,
-              longitude: place.geometry.location.lng
+              lat: place.geometry.location.lat,
+              lng: place.geometry.location.lng
             }))
           );
           
@@ -376,7 +377,10 @@ export const createCustomPubCrawlRoute = async (
 /**
  * Calculate total direct distance between a series of coordinates
  */
-const calculateTotalDirectDistance = (start: Coordinates, points: Coordinates[]): number => {
+const calculateTotalDirectDistance = (
+  start: Coordinates,
+  points: Coordinates[]
+): number => {
   let totalDistance = 0;
   let currentPoint = start;
   
