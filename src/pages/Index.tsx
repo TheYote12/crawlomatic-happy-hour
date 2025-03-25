@@ -31,7 +31,7 @@ const Index = () => {
   const [location, setLocation] = useState<Coordinates | null>(null);
   const [locationError, setLocationError] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(false);
-  const [isMapLoading, setIsMapLoading] = useState(false); // Fixed: Initialize before reference
+  const [isMapLoading, setIsMapLoading] = useState(isMapLoading);
   const [isScrolled, setIsScrolled] = useState(false);
   const [pubCrawl, setPubCrawl] = useState<PubCrawl | null>(null);
   const [activePubIndex, setActivePubIndex] = useState(-1);
@@ -116,15 +116,7 @@ const Index = () => {
       // Search for pubs near the user's location
       console.log("Attempting to search for pubs...");
       try {
-        const pubs = await searchNearbyPubs(
-          {
-            lat: location.latitude,
-            lng: location.longitude
-          },
-          radiusInMeters, 
-          mapRef.current, 
-          options.stops * 2
-        );
+        const pubs = await searchNearbyPubs(location, radiusInMeters, mapRef.current, options.stops * 2);
         
         if (pubs.length === 0) {
           toast.error('No pubs found nearby. Try increasing your search radius.');
@@ -133,14 +125,7 @@ const Index = () => {
         }
         
         // Create an optimized pub crawl route
-        const newPubCrawl = await createPubCrawlRoute(
-          {
-            lat: location.latitude,
-            lng: location.longitude
-          },
-          pubs, 
-          options.stops
-        );
+        const newPubCrawl = await createPubCrawlRoute(location, pubs, options.stops);
         
         setPubCrawl(newPubCrawl);
         setActivePubIndex(0);
